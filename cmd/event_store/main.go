@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/ilia-tolliu-go-event-store/internal"
 	"github.com/ilia-tolliu-go-event-store/internal/config"
 	"github.com/ilia-tolliu-go-event-store/internal/logger"
+	"github.com/ilia-tolliu-go-event-store/internal/repo"
 	"github.com/ilia-tolliu-go-event-store/internal/web"
 	"go.uber.org/zap"
 	"net/http"
@@ -49,7 +51,10 @@ func run(mode config.AppMode, log *zap.SugaredLogger) error {
 	}
 	log.Infow("startup", "config", esConfig)
 
-	webApp := web.NewEsWebApp(log)
+	dynamoDb := dynamodb.NewFromConfig(awsConfig)
+	esRepo := repo.NewEsRepo(dynamoDb, esConfig.TableName)
+
+	webApp := web.NewEsWebApp(esRepo, log)
 	server := http.Server{
 		Addr:    ":8080",
 		Handler: webApp,

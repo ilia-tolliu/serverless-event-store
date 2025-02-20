@@ -11,7 +11,7 @@ import (
 )
 
 type EsConfig struct {
-	DynamoDbTableName string
+	TableName string
 }
 
 func FromAws(ctx context.Context, mode AppMode, awsConfig aws.Config, log *zap.SugaredLogger) (EsConfig, error) {
@@ -29,7 +29,7 @@ func FromAws(ctx context.Context, mode AppMode, awsConfig aws.Config, log *zap.S
 	}
 
 	return EsConfig{
-		DynamoDbTableName: tableName,
+		TableName: tableName,
 	}, nil
 }
 

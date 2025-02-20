@@ -5,27 +5,31 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/ilia-tolliu-go-event-store/internal/logger"
+	"github.com/ilia-tolliu-go-event-store/internal/repo"
 	"go.uber.org/zap"
 	"net/http"
 )
 
 type EsWebApp struct {
 	*chi.Mux
-	mw  []Middleware
-	log *zap.SugaredLogger
+	mw     []Middleware
+	log    *zap.SugaredLogger
+	esRepo *repo.EsRepo
 }
 
-func NewEsWebApp(log *zap.SugaredLogger) *EsWebApp {
-	app := &EsWebApp{
-		Mux: chi.NewRouter(),
-		mw:  []Middleware{},
-		log: log,
+func NewEsWebApp(esRepo *repo.EsRepo, log *zap.SugaredLogger) *EsWebApp {
+	webApp := &EsWebApp{
+		Mux:    chi.NewRouter(),
+		mw:     []Middleware{},
+		log:    log,
+		esRepo: esRepo,
 	}
 
-	app.mw = append(app.mw, MwLogRequest)
-	app.Handle(http.MethodGet, "/liveness-check", app.HandleLivenessCheck)
+	webApp.mw = append(webApp.mw, MwLogRequest)
+	webApp.Handle(http.MethodGet, "/liveness-check", webApp.HandleLivenessCheck)
+	webApp.Handle(http.MethodPost, "/streams/{streamType}", webApp.HandleCreateStream)
 
-	return app
+	return webApp
 }
 
 func (a *EsWebApp) Handle(method string, path string, handler Handler, mw ...Middleware) {

@@ -2,19 +2,22 @@ package web
 
 import (
 	"github.com/go-chi/chi/v5"
+	"go.uber.org/zap"
 	"log"
 	"net/http"
 )
 
 type EsWebApp struct {
 	*chi.Mux
-	mw []Middleware
+	mw  []Middleware
+	log *zap.SugaredLogger
 }
 
-func NewEsWebApp() *EsWebApp {
+func NewEsWebApp(log *zap.SugaredLogger) *EsWebApp {
 	app := &EsWebApp{
 		Mux: chi.NewRouter(),
 		mw:  []Middleware{},
+		log: log,
 	}
 
 	app.mw = append(app.mw, MwLogger)

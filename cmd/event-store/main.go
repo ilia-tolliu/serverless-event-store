@@ -9,11 +9,11 @@ import (
 func main() {
 	log.Println("Hello!")
 
-	router := web.NewRouter()
+	webApp := web.NewEsWebApp()
 
 	server := http.Server{
 		Addr:    ":8080",
-		Handler: router,
+		Handler: webApp,
 	}
 
 	err := server.ListenAndServe()

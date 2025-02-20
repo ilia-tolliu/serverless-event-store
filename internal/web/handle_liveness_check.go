@@ -1,8 +1,8 @@
 package web
 
 import (
+	"context"
 	"encoding/json"
-	"log"
 	"net/http"
 	"time"
 )
@@ -12,7 +12,7 @@ type livenessCheckResponse struct {
 	At     time.Time `json:"at"`
 }
 
-func (h *EsHandler) HandleLivenessCheck(w http.ResponseWriter, _ *http.Request) {
+func (a *EsWebApp) HandleLivenessCheck(_ context.Context, w http.ResponseWriter, _ *http.Request) error {
 	response := livenessCheckResponse{
 		Status: "ok",
 		At:     time.Now(),
@@ -21,8 +21,5 @@ func (h *EsHandler) HandleLivenessCheck(w http.ResponseWriter, _ *http.Request) 
 	encoder := json.NewEncoder(w)
 	encoder.SetIndent("", "  ")
 
-	err := encoder.Encode(response)
-	if err != nil {
-		log.Printf("Failed to send response: %s", err)
-	}
+	return encoder.Encode(response)
 }

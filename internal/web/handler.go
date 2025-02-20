@@ -1,7 +1,8 @@
 package web
 
-type EsHandler struct{}
+import (
+	"context"
+	"net/http"
+)
 
-func NewEsHandler() *EsHandler {
-	return &EsHandler{}
-}
+type Handler func(context.Context, http.ResponseWriter, *http.Request) error

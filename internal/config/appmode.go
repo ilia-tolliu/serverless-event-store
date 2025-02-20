@@ -1,4 +1,4 @@
-package appmode
+package config
 
 import (
 	"log"

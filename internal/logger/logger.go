@@ -3,33 +3,33 @@ package logger
 import (
 	"context"
 	"fmt"
-	"github.com/ilia-tolliu-go-event-store/internal/appmode"
+	"github.com/ilia-tolliu-go-event-store/internal/config"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"os"
 )
 
-func New(mode appmode.AppMode) *zap.SugaredLogger {
-	var config zap.Config
+func New(mode config.AppMode) *zap.SugaredLogger {
+	var zapConfig zap.Config
 
 	switch mode {
-	case appmode.Development:
-		config = zap.NewDevelopmentConfig()
-	case appmode.Production:
-		config = zap.NewProductionConfig()
-	case appmode.Staging:
-		config = zap.NewProductionConfig()
+	case config.Development:
+		zapConfig = zap.NewDevelopmentConfig()
+	case config.Production:
+		zapConfig = zap.NewProductionConfig()
+	case config.Staging:
+		zapConfig = zap.NewProductionConfig()
 	}
 
-	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-	config.DisableStacktrace = true
-	config.InitialFields = map[string]any{
+	zapConfig.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	zapConfig.DisableStacktrace = true
+	zapConfig.InitialFields = map[string]any{
 		"service": "event-store",
 	}
 
-	config.OutputPaths = []string{"stdout"}
+	zapConfig.OutputPaths = []string{"stdout"}
 
-	log, err := config.Build(zap.WithCaller(true))
+	log, err := zapConfig.Build(zap.WithCaller(true))
 	if err != nil {
 		fmt.Println(fmt.Errorf("failed to initialize logger: %w", err))
 		os.Exit(1)

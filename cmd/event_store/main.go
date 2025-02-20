@@ -3,8 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/ilia-tolliu-go-event-store/internal"
-	"github.com/ilia-tolliu-go-event-store/internal/appmode"
+	"github.com/ilia-tolliu-go-event-store/internal/config"
 	"github.com/ilia-tolliu-go-event-store/internal/logger"
 	"github.com/ilia-tolliu-go-event-store/internal/web"
 	"go.uber.org/zap"
@@ -20,29 +21,42 @@ const AppModeKey = "EVENT_STORE_MODE"
 const WebShutdownTimeout = 5 * time.Second
 
 func main() {
-	mode := appmode.NewFromEnv(AppModeKey)
-
+	mode := config.NewFromEnv(AppModeKey)
 	log := logger.New(mode)
 	defer internal.IgnoreError(log.Sync)
 
-	err := run(log)
+	err := run(mode, log)
 	if err != nil {
 		log.Errorw("startup", "ERROR", err)
 		os.Exit(1)
 	}
 }
 
-func run(log *zap.SugaredLogger) error {
-	log.Infow("startup", "GOMAXPROCS", runtime.GOMAXPROCS(0))
+func run(mode config.AppMode, log *zap.SugaredLogger) error {
+	startupCtx := context.Background()
 
-	shutdown := make(chan os.Signal, 1)
-	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
+	log.Infow("startup", "GOMAXPROCS", runtime.GOMAXPROCS(0))
+	log.Infow("startup", "mode", mode.String())
+
+	awsConfig, err := awsconfig.LoadDefaultConfig(startupCtx)
+	if err != nil {
+		return fmt.Errorf("failed to load AWS SDK config, %w", err)
+	}
+
+	esConfig, err := config.FromAws(startupCtx, mode, awsConfig, log)
+	if err != nil {
+		return fmt.Errorf("failed to load config from AWS, %w", err)
+	}
+	log.Infow("startup", "config", esConfig)
 
 	webApp := web.NewEsWebApp(log)
 	server := http.Server{
 		Addr:    ":8080",
 		Handler: webApp,
 	}
+
+	shutdown := make(chan os.Signal, 1)
+	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
 
 	serverErrors := make(chan error, 1)
 

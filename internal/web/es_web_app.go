@@ -3,7 +3,6 @@ package web
 import (
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
-	"log"
 	"net/http"
 )
 
@@ -20,7 +19,7 @@ func NewEsWebApp(log *zap.SugaredLogger) *EsWebApp {
 		log: log,
 	}
 
-	app.mw = append(app.mw, MwLogger)
+	app.mw = append(app.mw, MwLogger(app.log))
 	app.Handle(http.MethodGet, "/liveness-check", app.HandleLivenessCheck)
 
 	return app
@@ -34,7 +33,7 @@ func (a *EsWebApp) Handle(method string, path string, handler Handler, mw ...Mid
 		ctx := r.Context()
 		err := handler(ctx, w, r)
 		if err != nil {
-			log.Printf("handler error: %v", err)
+			// todo convert into HTTP error response
 			return
 		}
 	}

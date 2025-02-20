@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"context"
 	"fmt"
 	"github.com/ilia-tolliu-go-event-store/internal/appmode"
 	"go.uber.org/zap"
@@ -35,4 +36,18 @@ func New(mode appmode.AppMode) *zap.SugaredLogger {
 	}
 
 	return log.Sugar()
+}
+
+type loggerCtxKey int
+
+const loggerKey loggerCtxKey = 1
+
+func WithLogger(ctx context.Context, log *zap.SugaredLogger) context.Context {
+	return context.WithValue(ctx, loggerKey, log)
+}
+
+func FromContext(ctx context.Context) *zap.SugaredLogger {
+	log := ctx.Value(loggerKey).(*zap.SugaredLogger)
+
+	return log
 }

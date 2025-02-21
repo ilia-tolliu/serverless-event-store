@@ -12,3 +12,13 @@ type Event struct {
 	Payload   any       `json:"payload" dynamodbav:"eventType"`
 	CreatedAt time.Time `json:"createdAt" dynamodbav:"createdAt"`
 }
+
+func NewEvent(streamId uuid.UUID, revision int, newEvent NewEsEvent, now time.Time) Event {
+	return Event{
+		StreamId:  streamId,
+		Revision:  revision,
+		EventType: newEvent.EventType,
+		Payload:   newEvent.Payload,
+		CreatedAt: now,
+	}
+}

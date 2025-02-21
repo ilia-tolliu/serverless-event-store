@@ -9,7 +9,7 @@ import (
 )
 
 type createStreamRequest struct {
-	InitialEvent estypes.NewEvent `json:"initialEvent"`
+	InitialEvent estypes.NewEsEvent `json:"initialEvent"`
 }
 
 type createStreamResponse struct {

@@ -1,6 +1,6 @@
 package estypes
 
-type NewEvent struct {
+type NewEsEvent struct {
 	EventType string `json:"eventType"`
 	Payload   any    `json:"payload"`
 }

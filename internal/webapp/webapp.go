@@ -1,4 +1,4 @@
-package web
+package webapp
 
 import (
 	"encoding/json"
@@ -10,15 +10,15 @@ import (
 	"net/http"
 )
 
-type EsWebApp struct {
+type WebApp struct {
 	*chi.Mux
 	mw     []Middleware
 	log    *zap.SugaredLogger
 	esRepo *repo.EsRepo
 }
 
-func NewEsWebApp(esRepo *repo.EsRepo, log *zap.SugaredLogger) *EsWebApp {
-	webApp := &EsWebApp{
+func NewEsWebApp(esRepo *repo.EsRepo, log *zap.SugaredLogger) *WebApp {
+	webApp := &WebApp{
 		Mux:    chi.NewRouter(),
 		mw:     []Middleware{},
 		log:    log,
@@ -32,7 +32,7 @@ func NewEsWebApp(esRepo *repo.EsRepo, log *zap.SugaredLogger) *EsWebApp {
 	return webApp
 }
 
-func (a *EsWebApp) Handle(method string, path string, handler Handler, mw ...Middleware) {
+func (a *WebApp) Handle(method string, path string, handler Handler, mw ...Middleware) {
 	handler = wrapMiddleware(mw, handler)
 	handler = wrapMiddleware(a.mw, handler)
 

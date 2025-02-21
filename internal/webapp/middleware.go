@@ -1,4 +1,4 @@
-package web
+package webapp
 
 type Middleware func(handler Handler) Handler
 

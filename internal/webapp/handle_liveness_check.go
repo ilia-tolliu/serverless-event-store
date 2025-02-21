@@ -1,4 +1,4 @@
-package web
+package webapp
 
 import (
 	"context"
@@ -11,7 +11,7 @@ type livenessCheckResponse struct {
 	At     time.Time `json:"at"`
 }
 
-func (a *EsWebApp) HandleLivenessCheck(_ context.Context, _ *http.Request) (Response, error) {
+func (a *WebApp) HandleLivenessCheck(_ context.Context, _ *http.Request) (Response, error) {
 	responseBody := livenessCheckResponse{
 		Status: "ok",
 		At:     time.Now(),

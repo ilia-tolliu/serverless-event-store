@@ -9,7 +9,7 @@ import (
 	"github.com/ilia-tolliu-go-event-store/internal/config"
 	"github.com/ilia-tolliu-go-event-store/internal/logger"
 	"github.com/ilia-tolliu-go-event-store/internal/repo"
-	"github.com/ilia-tolliu-go-event-store/internal/web"
+	"github.com/ilia-tolliu-go-event-store/internal/webapp"
 	"go.uber.org/zap"
 	"net/http"
 	"os"
@@ -54,7 +54,7 @@ func run(mode config.AppMode, log *zap.SugaredLogger) error {
 	dynamoDb := dynamodb.NewFromConfig(awsConfig)
 	esRepo := repo.NewEsRepo(dynamoDb, esConfig.TableName)
 
-	webApp := web.NewEsWebApp(esRepo, log)
+	webApp := webapp.NewEsWebApp(esRepo, log)
 	server := http.Server{
 		Addr:    ":8080",
 		Handler: webApp,

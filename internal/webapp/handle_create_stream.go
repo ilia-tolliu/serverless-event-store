@@ -1,4 +1,4 @@
-package web
+package webapp
 
 import (
 	"context"
@@ -16,7 +16,7 @@ type createStreamResponse struct {
 	Stream estypes.Stream `json:"stream"`
 }
 
-func (a *EsWebApp) HandleCreateStream(ctx context.Context, r *http.Request) (Response, error) {
+func (a *WebApp) HandleCreateStream(ctx context.Context, r *http.Request) (Response, error) {
 	streamType := r.PathValue("streamType")
 	if streamType == "" {
 		return Response{}, fmt.Errorf("no streamType specified")

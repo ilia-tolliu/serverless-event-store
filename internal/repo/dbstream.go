@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/google/uuid"
 	"github.com/ilia-tolliu-go-event-store/internal/estypes"
+	"strconv"
 	"time"
 )
 
@@ -55,6 +56,18 @@ func PreparePutDbStream(tableName string, stream estypes.Stream) (*types.Put, er
 
 func StreamShouldNotExist(put *types.Put) {
 	put.ConditionExpression = aws.String("attribute_not_exists(PK)")
+}
+
+func StreamShouldHaveRevision(put *types.Put, revision int) {
+	put.ConditionExpression = aws.String("#StreamRevision = :StreamRevision")
+	put.ExpressionAttributeNames = map[string]string{
+		"#StreamRevision": "StreamRevision",
+	}
+	put.ExpressionAttributeValues = map[string]types.AttributeValue{
+		":StreamRevision": &types.AttributeValueMemberN{
+			Value: strconv.Itoa(revision),
+		},
+	}
 }
 
 func PrepareGetDbStream(tableName string, streamId uuid.UUID) (*dynamodb.GetItemInput, error) {

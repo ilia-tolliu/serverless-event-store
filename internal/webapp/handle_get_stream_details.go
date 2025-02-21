@@ -12,9 +12,9 @@ type getStreamDetailsResponse struct {
 }
 
 func (a *WebApp) HandleGetStreamDetails(ctx context.Context, r *http.Request) (Response, error) {
-	streamType := r.PathValue("streamType")
-	if streamType == "" {
-		return Response{}, fmt.Errorf("no streamType specified")
+	streamType, err := ExtractStreamType(r)
+	if err != nil {
+		return Response{}, err
 	}
 
 	streamId, err := ExtractStreamId(r)

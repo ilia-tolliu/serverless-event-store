@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/google/uuid"
 	"github.com/ilia-tolliu-go-event-store/internal/estypes"
 	"time"
 )
@@ -53,4 +55,40 @@ func PreparePutDbStream(tableName string, stream estypes.Stream) (*types.Put, er
 
 func StreamShouldNotExist(put *types.Put) {
 	put.ConditionExpression = aws.String("attribute_not_exists(PK)")
+}
+
+func PrepareGetDbStream(tableName string, streamId uuid.UUID) (*dynamodb.GetItemInput, error) {
+	keySrc := map[string]any{
+		"PK": streamId.String(),
+		"SK": 0,
+	}
+
+	key, err := attributevalue.MarshalMap(keySrc)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal stream key: %w", err)
+	}
+
+	get := &dynamodb.GetItemInput{
+		Key:       key,
+		TableName: aws.String(tableName),
+	}
+
+	return get, nil
+}
+
+func IntoStream(dbstream DbStream) (estypes.Stream, error) {
+	streamId, err := uuid.Parse(dbstream.Pk)
+	if err != nil {
+		return estypes.Stream{}, fmt.Errorf("failed to parse UUID: %w", err)
+	}
+
+	stream := estypes.Stream{
+		StreamId:   streamId,
+		StreamType: dbstream.StreamType,
+		Revision:   dbstream.StreamRevision,
+		CreatedAt:  dbstream.CreatedAt,
+		UpdatedAt:  dbstream.UpdatedAt,
+	}
+
+	return stream, nil
 }

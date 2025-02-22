@@ -40,15 +40,18 @@ func (a *WebApp) Handle(method string, path string, handler Handler, mw ...Middl
 
 	h := func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		log := a.log.With(zap.String("requestId", uuid.New().String()))
+		requestId := uuid.New()
+		log := a.log.With(zap.String("requestId", requestId.String()))
 		ctx = logger.WithLogger(ctx, log)
 
 		response, err := handler(ctx, r)
 		if err != nil {
-			// todo convert into HTTP error response
-			return
+			webErr := NewWebError(requestId, err)
+			log.Errorw("failed to handle request", "error", err.Error())
+			response = NewResponse(Status(webErr.Status), Json(webErr))
 		}
 
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(response.status)
 
 		encoder := json.NewEncoder(w)

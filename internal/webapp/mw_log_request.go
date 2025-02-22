@@ -24,10 +24,9 @@ func MwLogRequest(handler Handler) Handler {
 
 		if err != nil {
 			status := http.StatusInternalServerError // todo derive status from error
-			log.Errorw("response error",
+			log.Errorw("response completed with error",
 				"latency", latency,
 				"status", status,
-				"error", err,
 			)
 
 			return NewResponse(), err

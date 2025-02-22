@@ -5,8 +5,8 @@ import (
 	"fmt"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/ilia-tolliu-go-event-store/internal"
 	"github.com/ilia-tolliu-go-event-store/internal/config"
+	"github.com/ilia-tolliu-go-event-store/internal/eserror"
 	"github.com/ilia-tolliu-go-event-store/internal/logger"
 	"github.com/ilia-tolliu-go-event-store/internal/repo"
 	"github.com/ilia-tolliu-go-event-store/internal/webapp"
@@ -25,7 +25,7 @@ const WebShutdownTimeout = 5 * time.Second
 func main() {
 	mode := config.NewFromEnv(AppModeKey)
 	log := logger.New(mode)
-	defer internal.IgnoreError(log.Sync)
+	defer eserror.Ignore(log.Sync)
 
 	err := run(mode, log)
 	if err != nil {
@@ -81,7 +81,7 @@ func run(mode config.AppMode, log *zap.SugaredLogger) error {
 		defer cancel()
 
 		if err := server.Shutdown(ctx); err != nil {
-			internal.IgnoreError(server.Close)
+			eserror.Ignore(server.Close)
 			return fmt.Errorf("could not gracefully shutdown server: %w", err)
 		}
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/ilia-tolliu-go-event-store/internal/eserror"
 	"github.com/ilia-tolliu-go-event-store/internal/estypes"
 	"net/http"
 )
@@ -38,7 +39,22 @@ func (a *WebApp) HandleAppendEvent(ctx context.Context, r *http.Request) (Respon
 		return Response{}, fmt.Errorf("failed to parse request body: %w", err)
 	}
 
-	stream, err := a.esRepo.AppendEvent(ctx, streamType, streamId, streamRevision, reqBody.Event)
+	stream, err := a.esRepo.GetStream(ctx, streamId)
+	if err != nil {
+		return Response{}, fmt.Errorf("failed to get stream from event store: %w", err)
+	}
+
+	err = stream.ShouldHaveType(streamType)
+	if err != nil {
+		return Response{}, eserror.NewNotFoundError(err)
+	}
+
+	err = stream.ShouldHaveRevision(streamRevision - 1)
+	if err != nil {
+		return Response{}, eserror.NewDataConflictError(err)
+	}
+
+	stream, err = a.esRepo.AppendEvent(ctx, streamType, streamId, streamRevision, reqBody.Event)
 	if err != nil {
 		return Response{}, fmt.Errorf("failed to append event to stream: %w", err)
 	}

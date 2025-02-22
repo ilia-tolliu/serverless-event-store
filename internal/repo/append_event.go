@@ -2,19 +2,16 @@ package repo
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/google/uuid"
 	"github.com/ilia-tolliu-go-event-store/internal/estypes"
-	"github.com/ilia-tolliu-go-event-store/internal/logger"
 	"time"
 )
 
 func (r *EsRepo) AppendEvent(ctx context.Context, streamType string, streamId uuid.UUID, revision int, newEvent estypes.NewEsEvent) (estypes.Stream, error) {
-	log := logger.FromContext(ctx)
 	now := time.Now()
 	stream := estypes.Stream{
 		StreamId:   streamId,
@@ -49,17 +46,7 @@ func (r *EsRepo) AppendEvent(ctx context.Context, streamType string, streamId uu
 		ClientRequestToken: aws.String(uuid.NewString()), // todo: use better idempotency token; should come from client
 	})
 	if err != nil {
-		cancellation := &types.TransactionCanceledException{}
-		if errors.As(err, &cancellation) {
-			log.Errorw("transaction canceledException",
-				"message", cancellation.Message,
-				"reasons", cancellation.CancellationReasons,
-				"code", cancellation.ErrorCode(),
-				"errorMessage", cancellation.ErrorMessage(),
-			)
-			return estypes.Stream{}, err
-		}
-		return estypes.Stream{}, fmt.Errorf("failed to append event to stream: %w", err)
+		return estypes.Stream{}, fmt.Errorf("failed to complete DB transaction: %w", err)
 	}
 
 	return stream, nil

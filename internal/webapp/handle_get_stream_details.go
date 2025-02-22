@@ -3,6 +3,7 @@ package webapp
 import (
 	"context"
 	"fmt"
+	"github.com/ilia-tolliu-go-event-store/internal/eserror"
 	"github.com/ilia-tolliu-go-event-store/internal/estypes"
 	"net/http"
 )
@@ -22,9 +23,14 @@ func (a *WebApp) HandleGetStreamDetails(ctx context.Context, r *http.Request) (R
 		return Response{}, err
 	}
 
-	stream, err := a.esRepo.GetStream(ctx, streamType, streamId)
+	stream, err := a.esRepo.GetStream(ctx, streamId)
 	if err != nil {
 		return Response{}, fmt.Errorf("failed to get stream details: %w", err)
+	}
+
+	err = stream.ShouldHaveType(streamType)
+	if err != nil {
+		return Response{}, eserror.NewNotFoundError(err)
 	}
 
 	responseBody := getStreamDetailsResponse{

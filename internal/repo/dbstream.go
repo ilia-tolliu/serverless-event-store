@@ -89,18 +89,18 @@ func PrepareGetDbStream(tableName string, streamId uuid.UUID) (*dynamodb.GetItem
 	return get, nil
 }
 
-func IntoStream(dbstream DbStream) (estypes.Stream, error) {
-	streamId, err := uuid.Parse(dbstream.Pk)
+func IntoStream(dbStream DbStream) (estypes.Stream, error) {
+	streamId, err := uuid.Parse(dbStream.Pk)
 	if err != nil {
-		return estypes.Stream{}, fmt.Errorf("failed to parse UUID: %w", err)
+		return estypes.Stream{}, fmt.Errorf("failed to parse streamId: %w", err)
 	}
 
 	stream := estypes.Stream{
 		StreamId:   streamId,
-		StreamType: dbstream.StreamType,
-		Revision:   dbstream.StreamRevision,
-		CreatedAt:  dbstream.CreatedAt,
-		UpdatedAt:  dbstream.UpdatedAt,
+		StreamType: dbStream.StreamType,
+		Revision:   dbStream.StreamRevision,
+		CreatedAt:  dbStream.CreatedAt,
+		UpdatedAt:  dbStream.UpdatedAt,
 	}
 
 	return stream, nil

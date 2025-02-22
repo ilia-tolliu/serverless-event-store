@@ -2,7 +2,6 @@ package webapp
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/ilia-tolliu-go-event-store/internal/eserror"
 	"github.com/ilia-tolliu-go-event-store/internal/estypes"
@@ -35,12 +34,12 @@ func (a *WebApp) HandleAppendEvent(ctx context.Context, r *http.Request) (Respon
 	}
 
 	var reqBody appendEventRequest
-	err = json.NewDecoder(r.Body).Decode(&reqBody)
+	err = ExtractRequestBody(r, &reqBody)
 	if err != nil {
-		return Response{}, fmt.Errorf("failed to parse request body: %w", err)
+		return Response{}, err
 	}
 
-	err = esvalidate.Validate(reqBody)
+	err = esvalidate.Validate(&reqBody)
 	if err != nil {
 		return Response{}, err
 	}

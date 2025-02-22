@@ -52,3 +52,7 @@ func (e *WebError) Error() string {
 func (e *WebError) Unwrap() error {
 	return e.Err
 }
+
+func IntoResponse(err WebError) Response {
+	return NewResponse(Status(err.Status), Json(err))
+}

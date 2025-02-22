@@ -2,7 +2,6 @@ package webapp
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/ilia-tolliu-go-event-store/internal/estypes"
 	"github.com/ilia-tolliu-go-event-store/internal/esvalidate"
@@ -24,9 +23,9 @@ func (a *WebApp) HandleCreateStream(ctx context.Context, r *http.Request) (Respo
 	}
 
 	var reqBody createStreamRequest
-	err = json.NewDecoder(r.Body).Decode(&reqBody)
+	err = ExtractRequestBody(r, &reqBody)
 	if err != nil {
-		return Response{}, fmt.Errorf("failed to parse request body: %w", err)
+		return Response{}, err
 	}
 
 	err = esvalidate.Validate(reqBody)

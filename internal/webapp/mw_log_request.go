@@ -2,6 +2,7 @@ package webapp
 
 import (
 	"context"
+	"errors"
 	"github.com/ilia-tolliu-go-event-store/internal/logger"
 	"net/http"
 	"time"
@@ -23,7 +24,13 @@ func MwLogRequest(handler Handler) Handler {
 		latency := time.Since(start)
 
 		if err != nil {
-			status := http.StatusInternalServerError // todo derive status from error
+			status := http.StatusInternalServerError
+
+			webErr := &WebError{}
+			if errors.As(err, &webErr) {
+				status = webErr.Status
+			}
+
 			log.Errorw("response completed with error",
 				"latency", latency,
 				"status", status,

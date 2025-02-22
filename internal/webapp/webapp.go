@@ -2,8 +2,8 @@ package webapp
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 	"github.com/ilia-tolliu-go-event-store/internal/logger"
 	"github.com/ilia-tolliu-go-event-store/internal/repo"
 	"go.uber.org/zap"
@@ -26,6 +26,7 @@ func NewEsWebApp(esRepo *repo.EsRepo, log *zap.SugaredLogger) *WebApp {
 	}
 
 	webApp.mw = append(webApp.mw, MwLogRequest)
+	webApp.mw = append(webApp.mw, MwConvertError)
 	webApp.Handle(http.MethodGet, "/liveness-check", webApp.HandleLivenessCheck)
 	webApp.Handle(http.MethodPost, "/streams/{streamType}", webApp.HandleCreateStream)
 	webApp.Handle(http.MethodGet, "/streams/{streamType}/{streamId}/details", webApp.HandleGetStreamDetails)
@@ -39,16 +40,19 @@ func (a *WebApp) Handle(method string, path string, handler Handler, mw ...Middl
 	handler = wrapMiddleware(a.mw, handler)
 
 	h := func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		requestId := uuid.New()
+		requestId := NewRequestId()
 		log := a.log.With(zap.String("requestId", requestId.String()))
+
+		ctx := r.Context()
 		ctx = logger.WithLogger(ctx, log)
+		ctx = WithRequestId(ctx, requestId)
 
 		response, err := handler(ctx, r)
 		if err != nil {
-			webErr := NewWebError(requestId, err)
-			log.Errorw("failed to handle request", "error", err.Error())
-			response = NewResponse(Status(webErr.Status), Json(webErr))
+			webErr := &WebError{}
+			if errors.As(err, &webErr) {
+				response = IntoResponse(*webErr)
+			}
 		}
 
 		w.Header().Set("Content-Type", "application/json")

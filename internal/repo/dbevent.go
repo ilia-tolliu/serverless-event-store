@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/google/uuid"
 	"github.com/ilia-tolliu-go-event-store/internal/estypes"
 	"time"
 )
@@ -17,7 +20,7 @@ type DbEvent struct {
 	Sk         int       `dynamodbav:"SK"`
 	RecordType string    `dynamodbav:"RecordType"`
 	EventType  string    `dynamodbav:"EventType"`
-	Payload    any       `dynamodbav:"Payload"`
+	Payload    string    `dynamodbav:"Payload"`
 	CreatedAt  time.Time `dynamodbav:"CreatedAt"`
 }
 
@@ -58,4 +61,55 @@ func PreparePutDbEvent(tableName string, event estypes.Event) (*types.Put, error
 	}
 
 	return &put, nil
+}
+
+func PrepareDbEventsQuery(tableName string, streamId uuid.UUID, afterRevision int) (*dynamodb.QueryInput, error) {
+	keyCond, err := expression.NewBuilder().
+		WithKeyCondition(expression.Key("PK").Equal(expression.Value(streamId.String()))).
+		Build()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build key condition: %w", err)
+	}
+
+	exclusiveStartKeySrc := map[string]any{
+		"PK": streamId.String(),
+		"SK": afterRevision,
+	}
+	exclusiveStartKey, err := attributevalue.MarshalMap(exclusiveStartKeySrc)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal exclusiveStartKey: %w", err)
+	}
+
+	query := &dynamodb.QueryInput{
+		KeyConditionExpression:    keyCond.KeyCondition(),
+		ExpressionAttributeNames:  keyCond.Names(),
+		ExpressionAttributeValues: keyCond.Values(),
+		ExclusiveStartKey:         exclusiveStartKey,
+		TableName:                 aws.String(tableName),
+	}
+
+	return query, nil
+}
+
+func IntoEvent(dbEvent DbEvent) (estypes.Event, error) {
+	streamId, err := uuid.Parse(dbEvent.Pk)
+	if err != nil {
+		return estypes.Event{}, fmt.Errorf("failed to parse streamId: %w", err)
+	}
+
+	payload := make(map[string]interface{})
+	err = json.Unmarshal([]byte(dbEvent.Payload), &payload)
+	if err != nil {
+		return estypes.Event{}, fmt.Errorf("failed to unmarshal event payload: %w", err)
+	}
+
+	event := estypes.Event{
+		StreamId:  streamId,
+		Revision:  dbEvent.Sk,
+		EventType: dbEvent.EventType,
+		Payload:   payload,
+		CreatedAt: dbEvent.CreatedAt,
+	}
+
+	return event, nil
 }

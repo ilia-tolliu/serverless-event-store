@@ -27,6 +27,9 @@ func (r *EsRepo) GetStream(ctx context.Context, streamId uuid.UUID) (estypes.Str
 
 	var dbStream DbStream
 	err = attributevalue.UnmarshalMap(output.Item, &dbStream)
+	if err != nil {
+		return estypes.Stream{}, fmt.Errorf("failed to unmarshal stream from DB: %w", err)
+	}
 
 	stream, err := IntoStream(dbStream)
 	if err != nil {

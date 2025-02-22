@@ -15,7 +15,7 @@ func ExtractStreamId(r *http.Request) (uuid.UUID, error) {
 
 	streamId, err := uuid.Parse(streamIdStr)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("invalid streamId: %w", streamIdStr)
+		return uuid.Nil, fmt.Errorf("invalid streamId: %w", err)
 	}
 
 	return streamId, nil

@@ -35,3 +35,10 @@ func NewEmptyValidationErrors() ValidationErrors {
 
 	return ValidationErrors{Messages: messages}
 }
+
+func NewSimpleValidationError(key string, message string) ValidationErrors {
+	messages := map[string][]string{
+		key: {message},
+	}
+	return ValidationErrors{messages}
+}

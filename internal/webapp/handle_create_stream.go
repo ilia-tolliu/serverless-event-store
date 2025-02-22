@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ilia-tolliu-go-event-store/internal/estypes"
+	"github.com/ilia-tolliu-go-event-store/internal/esvalidate"
 	"net/http"
 )
 
 type createStreamRequest struct {
-	InitialEvent estypes.NewEsEvent `json:"initialEvent"`
+	InitialEvent *estypes.NewEsEvent `json:"initialEvent,omitempty" validate:"required"`
 }
 
 type createStreamResponse struct {
@@ -28,7 +29,12 @@ func (a *WebApp) HandleCreateStream(ctx context.Context, r *http.Request) (Respo
 		return Response{}, fmt.Errorf("failed to parse request body: %w", err)
 	}
 
-	stream, err := a.esRepo.CreateStream(ctx, streamType, reqBody.InitialEvent)
+	err = esvalidate.Validate(reqBody)
+	if err != nil {
+		return Response{}, err
+	}
+
+	stream, err := a.esRepo.CreateStream(ctx, streamType, *reqBody.InitialEvent)
 	if err != nil {
 		return Response{}, fmt.Errorf("failed to create stream: %w", err)
 	}

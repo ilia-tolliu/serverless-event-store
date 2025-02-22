@@ -6,11 +6,12 @@ import (
 	"fmt"
 	"github.com/ilia-tolliu-go-event-store/internal/eserror"
 	"github.com/ilia-tolliu-go-event-store/internal/estypes"
+	"github.com/ilia-tolliu-go-event-store/internal/esvalidate"
 	"net/http"
 )
 
 type appendEventRequest struct {
-	Event estypes.NewEsEvent `json:"event"`
+	Event *estypes.NewEsEvent `json:"event,omitempty" validate:"required"`
 }
 
 type appendEventResponse struct {
@@ -39,6 +40,11 @@ func (a *WebApp) HandleAppendEvent(ctx context.Context, r *http.Request) (Respon
 		return Response{}, fmt.Errorf("failed to parse request body: %w", err)
 	}
 
+	err = esvalidate.Validate(reqBody)
+	if err != nil {
+		return Response{}, err
+	}
+
 	stream, err := a.esRepo.GetStream(ctx, streamId)
 	if err != nil {
 		return Response{}, fmt.Errorf("failed to get stream from event store: %w", err)
@@ -54,7 +60,7 @@ func (a *WebApp) HandleAppendEvent(ctx context.Context, r *http.Request) (Respon
 		return Response{}, eserror.NewDataConflictError(err)
 	}
 
-	stream, err = a.esRepo.AppendEvent(ctx, streamType, streamId, streamRevision, reqBody.Event)
+	stream, err = a.esRepo.AppendEvent(ctx, streamType, streamId, streamRevision, *reqBody.Event)
 	if err != nil {
 		return Response{}, fmt.Errorf("failed to append event to stream: %w", err)
 	}

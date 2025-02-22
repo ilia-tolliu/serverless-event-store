@@ -26,13 +26,14 @@ func fromEvent(event estypes.Event) (DbEvent, error) {
 	if err != nil {
 		return DbEvent{}, fmt.Errorf("failed to marshal event payload: %w", err)
 	}
+	payloadStr := string(payload)
 
 	dbEvent := DbEvent{
 		Pk:         event.StreamId.String(),
 		Sk:         event.Revision,
 		RecordType: RecordTypeEvent,
 		EventType:  event.EventType,
-		Payload:    string(payload),
+		Payload:    payloadStr,
 		CreatedAt:  event.CreatedAt,
 	}
 

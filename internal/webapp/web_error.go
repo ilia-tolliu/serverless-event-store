@@ -14,6 +14,7 @@ type WebError struct {
 	RequestId        uuid.UUID `json:"requestId"`
 	MessageForLog    string    `json:"-"`
 	Err              error     `json:"-"`
+	Details          any       `json:"details"`
 }
 
 func NewWebError(requestId uuid.UUID, err error) *WebError {
@@ -27,6 +28,7 @@ func NewWebError(requestId uuid.UUID, err error) *WebError {
 
 	dataConflictErr := &eserror.DataConflictError{}
 	notFoundErr := &eserror.NotFoundError{}
+	invalid := &eserror.ValidationError{}
 
 	if errors.As(err, &dataConflictErr) {
 		webErr.Status = http.StatusConflict
@@ -34,6 +36,10 @@ func NewWebError(requestId uuid.UUID, err error) *WebError {
 	} else if errors.As(err, &notFoundErr) {
 		webErr.Status = http.StatusNotFound
 		webErr.MessageForClient = "Requested resource not found"
+	} else if errors.As(err, &invalid) {
+		webErr.Status = http.StatusBadRequest
+		webErr.MessageForLog = "Bad request"
+		webErr.Details = invalid.ValidationErrors
 	}
 
 	return webErr

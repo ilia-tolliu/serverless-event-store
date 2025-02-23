@@ -8,6 +8,8 @@ import (
 	"github.com/ilia-tolliu-go-event-store/internal/repo"
 	"go.uber.org/zap"
 	"net/http"
+	"os"
+	"path/filepath"
 )
 
 type WebApp struct {
@@ -27,17 +29,22 @@ func NewEsWebApp(esRepo *repo.EsRepo, log *zap.SugaredLogger) *WebApp {
 
 	webApp.mw = append(webApp.mw, MwLogRequest)
 	webApp.mw = append(webApp.mw, MwConvertError)
-	webApp.Handle(http.MethodGet, "/liveness-check", webApp.HandleLivenessCheck)
-	webApp.Handle(http.MethodPost, "/streams/{streamType}", webApp.HandleCreateStream)
-	webApp.Handle(http.MethodGet, "/streams/{streamType}/{streamId}/details", webApp.HandleGetStreamDetails)
-	webApp.Handle(http.MethodPut, "/streams/{streamType}/{streamId}/events/{streamRevision}", webApp.HandleAppendEvent)
-	webApp.Handle(http.MethodGet, "/streams/{streamType}/{streamId}/events", webApp.HandleGetStreamEvents)
-	webApp.Handle(http.MethodGet, "/streams/{streamType}", webApp.HandleGetStreams)
+	webApp.EsRoute(http.MethodGet, "/liveness-check", webApp.HandleLivenessCheck)
+	webApp.EsRoute(http.MethodPost, "/streams/{streamType}", webApp.HandleCreateStream)
+	webApp.EsRoute(http.MethodGet, "/streams/{streamType}/{streamId}/details", webApp.HandleGetStreamDetails)
+	webApp.EsRoute(http.MethodPut, "/streams/{streamType}/{streamId}/events/{streamRevision}", webApp.HandleAppendEvent)
+	webApp.EsRoute(http.MethodGet, "/streams/{streamType}/{streamId}/events", webApp.HandleGetStreamEvents)
+	webApp.EsRoute(http.MethodGet, "/streams/{streamType}", webApp.HandleGetStreams)
+
+	workDir, _ := os.Getwd()
+	swaggerUiDir := http.Dir(filepath.Join(workDir, "swagger_ui"))
+	webApp.Get("/openapi/openapi-spec.json", HandleOpenapiSpec)
+	StaticFileServer(webApp, "/openapi", swaggerUiDir)
 
 	return webApp
 }
 
-func (a *WebApp) Handle(method string, path string, handler Handler, mw ...Middleware) {
+func (a *WebApp) EsRoute(method string, path string, handler Handler, mw ...Middleware) {
 	handler = wrapMiddleware(mw, handler)
 	handler = wrapMiddleware(a.mw, handler)
 

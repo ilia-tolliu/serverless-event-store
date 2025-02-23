@@ -32,6 +32,7 @@ func NewEsWebApp(esRepo *repo.EsRepo, log *zap.SugaredLogger) *WebApp {
 	webApp.Handle(http.MethodGet, "/streams/{streamType}/{streamId}/details", webApp.HandleGetStreamDetails)
 	webApp.Handle(http.MethodPut, "/streams/{streamType}/{streamId}/events/{streamRevision}", webApp.HandleAppendEvent)
 	webApp.Handle(http.MethodGet, "/streams/{streamType}/{streamId}/events", webApp.HandleGetStreamEvents)
+	webApp.Handle(http.MethodGet, "/streams/{streamType}", webApp.HandleGetStreams)
 
 	return webApp
 }

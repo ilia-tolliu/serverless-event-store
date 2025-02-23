@@ -10,7 +10,7 @@ import (
 )
 
 func (r *EsRepo) GetStream(ctx context.Context, streamId uuid.UUID) (estypes.Stream, error) {
-	streamGet, err := PrepareGetDbStream(r.tableName, streamId)
+	streamGet, err := PrepareDbStreamGet(r.tableName, streamId)
 	if err != nil {
 		return estypes.Stream{}, fmt.Errorf("failed to prepare GetDbStream: %w", err)
 	}
@@ -25,7 +25,7 @@ func (r *EsRepo) GetStream(ctx context.Context, streamId uuid.UUID) (estypes.Str
 		return estypes.Stream{}, eserror.NewNotFoundError(err)
 	}
 
-	var dbStream DbStream
+	var dbStream DbStreamCreate
 	err = attributevalue.UnmarshalMap(output.Item, &dbStream)
 	if err != nil {
 		return estypes.Stream{}, fmt.Errorf("failed to unmarshal stream from DB: %w", err)
@@ -33,7 +33,7 @@ func (r *EsRepo) GetStream(ctx context.Context, streamId uuid.UUID) (estypes.Str
 
 	stream, err := IntoStream(dbStream)
 	if err != nil {
-		return estypes.Stream{}, fmt.Errorf("failed to convert DbStream into Stream [%s]: %w", streamId, err)
+		return estypes.Stream{}, fmt.Errorf("failed to convert DbStreamCreate into Stream [%s]: %w", streamId, err)
 	}
 
 	return stream, nil

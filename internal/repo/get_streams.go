@@ -30,7 +30,7 @@ func (r *EsRepo) GetStreams(ctx context.Context, streamType string, updatedAfter
 	}
 
 	for _, item := range output.Items {
-		var dbStream DbStream
+		var dbStream DbStreamCreate
 		err = attributevalue.UnmarshalMap(item, &dbStream)
 		if err != nil {
 			return estypes.StreamPage{}, fmt.Errorf("failed to unmarshal stream from DB: %w", err)
@@ -38,7 +38,7 @@ func (r *EsRepo) GetStreams(ctx context.Context, streamType string, updatedAfter
 
 		stream, err := IntoStream(dbStream)
 		if err != nil {
-			return estypes.StreamPage{}, fmt.Errorf("failed to convert DbStream into Stream [%s]: %w", dbStream.Pk, err)
+			return estypes.StreamPage{}, fmt.Errorf("failed to convert DbStreamCreate into Stream [%s]: %w", dbStream.Pk, err)
 		}
 
 		streams = append(streams, stream)

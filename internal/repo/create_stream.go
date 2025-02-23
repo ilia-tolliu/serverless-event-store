@@ -17,14 +17,12 @@ func (r *EsRepo) CreateStream(ctx context.Context, streamType string, initialEve
 	stream := estypes.NewStream(streamId, streamType, now)
 	event := estypes.NewEvent(streamId, 1, initialEvent, now)
 
-	streamPut, err := PreparePutDbStream(r.tableName, stream)
+	streamPut, err := PrepareDbStreamCreate(r.tableName, stream)
 	if err != nil {
 		return estypes.Stream{}, err
 	}
 
-	StreamShouldNotExist(streamPut)
-
-	eventPut, err := PreparePutDbEvent(r.tableName, event)
+	eventPut, err := PrepareDbEventPut(r.tableName, event)
 	if err != nil {
 		return estypes.Stream{}, err
 	}

@@ -22,14 +22,12 @@ func (r *EsRepo) AppendEvent(ctx context.Context, streamType string, streamId uu
 	}
 	event := estypes.NewEvent(streamId, revision, newEvent, now)
 
-	streamPut, err := PreparePutDbStream(r.tableName, stream)
+	streamUpdate, err := PrepareDbStreamUpdate(r.tableName, stream)
 	if err != nil {
 		return estypes.Stream{}, err
 	}
 
-	StreamShouldHaveRevision(streamPut, revision-1)
-
-	eventPut, err := PreparePutDbEvent(r.tableName, event)
+	eventPut, err := PrepareDbEventPut(r.tableName, event)
 	if err != nil {
 		return estypes.Stream{}, err
 	}
@@ -37,7 +35,7 @@ func (r *EsRepo) AppendEvent(ctx context.Context, streamType string, streamId uu
 	_, err = r.dynamoDb.TransactWriteItems(ctx, &dynamodb.TransactWriteItemsInput{
 		TransactItems: []types.TransactWriteItem{
 			{
-				Put: streamPut,
+				Update: streamUpdate,
 			},
 			{
 				Put: eventPut,

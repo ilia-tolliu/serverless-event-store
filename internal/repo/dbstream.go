@@ -9,15 +9,13 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/google/uuid"
 	"github.com/ilia-tolliu-go-event-store/internal/estypes"
-	"strconv"
-	"strings"
 	"time"
 )
 
 const RecordTypeStream = "stream"
 const streamIndexName = "StreamIndex"
 
-type DbStream struct {
+type DbStreamCreate struct {
 	Pk             string    `dynamodbav:"PK"`
 	Sk             int       `dynamodbav:"SK"`
 	RecordType     string    `dynamodbav:"RecordType"`
@@ -27,8 +25,13 @@ type DbStream struct {
 	UpdatedAt      time.Time `dynamodbav:"UpdatedAt"`
 }
 
-func fromStream(stream estypes.Stream) DbStream {
-	dbStream := DbStream{
+type dbStreamKey struct {
+	Pk string `dynamodbav:"PK"`
+	Sk int    `dynamodbav:"SK"`
+}
+
+func createFromStream(stream estypes.Stream) DbStreamCreate {
+	dbStreamCreate := DbStreamCreate{
 		Pk:             stream.StreamId.String(),
 		Sk:             0,
 		RecordType:     RecordTypeStream,
@@ -38,42 +41,66 @@ func fromStream(stream estypes.Stream) DbStream {
 		UpdatedAt:      stream.UpdatedAt,
 	}
 
-	return dbStream
+	return dbStreamCreate
 }
 
-func PreparePutDbStream(tableName string, stream estypes.Stream) (*types.Put, error) {
-	dbStream := fromStream(stream)
+func keyFromStream(stream estypes.Stream) dbStreamKey {
+	dbStreamKey := dbStreamKey{
+		Pk: stream.StreamId.String(),
+		Sk: 0,
+	}
 
-	value, err := attributevalue.MarshalMap(dbStream)
+	return dbStreamKey
+}
+
+func PrepareDbStreamCreate(tableName string, stream estypes.Stream) (*types.Put, error) {
+	dbStreamCreate := createFromStream(stream)
+
+	value, err := attributevalue.MarshalMap(dbStreamCreate)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal db stream: %w", err)
+		return nil, fmt.Errorf("failed to marshal db stream create: %w", err)
 	}
 
 	put := types.Put{
-		Item:      value,
-		TableName: aws.String(tableName),
+		Item:                value,
+		TableName:           aws.String(tableName),
+		ConditionExpression: aws.String("attribute_not_exists(PK)"),
 	}
 
 	return &put, nil
 }
 
-func StreamShouldNotExist(put *types.Put) {
-	put.ConditionExpression = aws.String("attribute_not_exists(PK)")
+func PrepareDbStreamUpdate(tableName string, stream estypes.Stream) (*types.Update, error) {
+	updateExpr, err := expression.NewBuilder().WithUpdate(
+		expression.
+			Set(expression.Name("StreamRevision"), expression.Value(stream.Revision)).
+			Set(expression.Name("UpdatedAt"), expression.Value(stream.UpdatedAt)),
+	).
+		WithCondition(expression.Name("StreamRevision").Equal(expression.Value(stream.Revision - 1))).
+		Build()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build update expression: %w", err)
+	}
+
+	streamKey := keyFromStream(stream)
+	streamKeyValue, err := attributevalue.MarshalMap(streamKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal stream key: %w", err)
+	}
+
+	update := types.Update{
+		Key:                       streamKeyValue,
+		TableName:                 aws.String(tableName),
+		UpdateExpression:          updateExpr.Update(),
+		ExpressionAttributeNames:  updateExpr.Names(),
+		ExpressionAttributeValues: updateExpr.Values(),
+		ConditionExpression:       updateExpr.Condition(),
+	}
+
+	return &update, nil
 }
 
-func StreamShouldHaveRevision(put *types.Put, revision int) {
-	put.ConditionExpression = aws.String("#StreamRevision = :StreamRevision")
-	put.ExpressionAttributeNames = map[string]string{
-		"#StreamRevision": "StreamRevision",
-	}
-	put.ExpressionAttributeValues = map[string]types.AttributeValue{
-		":StreamRevision": &types.AttributeValueMemberN{
-			Value: strconv.Itoa(revision),
-		},
-	}
-}
-
-func PrepareGetDbStream(tableName string, streamId uuid.UUID) (*dynamodb.GetItemInput, error) {
+func PrepareDbStreamGet(tableName string, streamId uuid.UUID) (*dynamodb.GetItemInput, error) {
 	keySrc := map[string]any{
 		"PK": streamId.String(),
 		"SK": 0,
@@ -127,7 +154,7 @@ func PrepareDbStreamsQuery(tableName string, streamType string, updatedAfter tim
 	return query, nil
 }
 
-func IntoStream(dbStream DbStream) (estypes.Stream, error) {
+func IntoStream(dbStream DbStreamCreate) (estypes.Stream, error) {
 	streamId, err := uuid.Parse(dbStream.Pk)
 	if err != nil {
 		return estypes.Stream{}, fmt.Errorf("failed to parse streamId: %w", err)

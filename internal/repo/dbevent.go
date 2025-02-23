@@ -43,7 +43,7 @@ func fromEvent(event estypes.Event) (DbEvent, error) {
 	return dbEvent, nil
 }
 
-func PreparePutDbEvent(tableName string, event estypes.Event) (*types.Put, error) {
+func PrepareDbEventPut(tableName string, event estypes.Event) (*types.Put, error) {
 	dbEvent, err := fromEvent(event)
 	if err != nil {
 		return nil, err

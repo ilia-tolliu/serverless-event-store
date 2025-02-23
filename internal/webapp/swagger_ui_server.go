@@ -3,12 +3,14 @@ package webapp
 import (
 	"github.com/go-chi/chi/v5"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 )
 
-func StaticFileServer(r chi.Router, path string, root http.FileSystem) {
+func SwaggerUiServer(r chi.Router, path string) {
 	if strings.ContainsAny(path, "{}*") {
-		panic("StaticFileServer does not support URL parameters")
+		panic("SwaggerUI does not support URL parameters")
 	}
 
 	if path != "/" && path[len(path)-1] != '/' {
@@ -20,7 +22,11 @@ func StaticFileServer(r chi.Router, path string, root http.FileSystem) {
 	r.Get(path, func(w http.ResponseWriter, r *http.Request) {
 		routeCtx := chi.RouteContext(r.Context())
 		pathPrefix := strings.TrimSuffix(routeCtx.RoutePattern(), "/*")
-		fs := http.StripPrefix(pathPrefix, http.FileServer(root))
+
+		workDir, _ := os.Getwd()
+		swaggerUiDir := http.Dir(filepath.Join(workDir, "swagger_ui"))
+		fs := http.StripPrefix(pathPrefix, http.FileServer(swaggerUiDir))
+
 		fs.ServeHTTP(w, r)
 	})
 }

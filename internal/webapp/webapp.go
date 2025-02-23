@@ -8,8 +8,6 @@ import (
 	"github.com/ilia-tolliu-go-event-store/internal/repo"
 	"go.uber.org/zap"
 	"net/http"
-	"os"
-	"path/filepath"
 )
 
 type WebApp struct {
@@ -36,10 +34,8 @@ func NewEsWebApp(esRepo *repo.EsRepo, log *zap.SugaredLogger) *WebApp {
 	webApp.EsRoute(http.MethodGet, "/streams/{streamType}/{streamId}/events", webApp.HandleGetStreamEvents)
 	webApp.EsRoute(http.MethodGet, "/streams/{streamType}", webApp.HandleGetStreams)
 
-	workDir, _ := os.Getwd()
-	swaggerUiDir := http.Dir(filepath.Join(workDir, "swagger_ui"))
 	webApp.Get("/openapi/openapi-spec.json", HandleOpenapiSpec)
-	StaticFileServer(webApp, "/openapi", swaggerUiDir)
+	SwaggerUiServer(webApp, "/openapi")
 
 	return webApp
 }

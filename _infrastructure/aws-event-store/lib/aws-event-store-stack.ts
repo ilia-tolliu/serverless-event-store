@@ -74,6 +74,7 @@ export class AwsEventStoreStack extends cdk.Stack {
         })
         esServiceRole.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'))
         esServiceRole.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName('AmazonSSMReadOnlyAccess'))
+        esServiceRole.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName('AmazonDynamoDBFullAccess'));
 
         return new Function(this, 'EsLambda', {
             runtime: Runtime.PROVIDED_AL2023,

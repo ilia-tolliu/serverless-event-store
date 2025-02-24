@@ -36,6 +36,7 @@ func NewEsWebApp(esRepo *repo.EsRepo, log *zap.SugaredLogger) *WebApp {
 
 	webApp.Get("/openapi/openapi-spec.json", HandleOpenapiSpec)
 	SwaggerUiServer(webApp, "/openapi")
+	webApp.EsRoute(http.MethodGet, "/", webApp.HandleGetHome)
 
 	return webApp
 }
@@ -61,6 +62,9 @@ func (a *WebApp) EsRoute(method string, path string, handler Handler, mw ...Midd
 		}
 
 		w.Header().Set("Content-Type", "application/json")
+		for key, value := range response.headers {
+			w.Header().Set(key, value)
+		}
 		w.WriteHeader(response.status)
 
 		encoder := json.NewEncoder(w)

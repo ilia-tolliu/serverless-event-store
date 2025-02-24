@@ -39,9 +39,9 @@ func (r *EsRepo) GetEvents(ctx context.Context, streamId uuid.UUID, afterRevisio
 	}
 
 	page := estypes.EventPage{
-		Events:               events,
-		HasMore:              output.LastEvaluatedKey != nil,
-		LasEvaluatedRevision: lastEvaluatedRevision,
+		Events:                events,
+		HasMore:               output.LastEvaluatedKey != nil,
+		LastEvaluatedRevision: lastEvaluatedRevision,
 	}
 
 	return page, nil

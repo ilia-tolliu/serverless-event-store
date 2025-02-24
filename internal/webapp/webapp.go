@@ -29,10 +29,10 @@ func NewEsWebApp(esRepo *repo.EsRepo, log *zap.SugaredLogger) *WebApp {
 	webApp.mw = append(webApp.mw, MwConvertError)
 	webApp.EsRoute(http.MethodGet, "/liveness-check", webApp.HandleLivenessCheck)
 	webApp.EsRoute(http.MethodPost, "/streams/{streamType}", webApp.HandleCreateStream)
+	webApp.EsRoute(http.MethodGet, "/streams/{streamType}", webApp.HandleGetStreams)
 	webApp.EsRoute(http.MethodGet, "/streams/{streamType}/{streamId}/details", webApp.HandleGetStreamDetails)
 	webApp.EsRoute(http.MethodPut, "/streams/{streamType}/{streamId}/events/{streamRevision}", webApp.HandleAppendEvent)
 	webApp.EsRoute(http.MethodGet, "/streams/{streamType}/{streamId}/events", webApp.HandleGetStreamEvents)
-	webApp.EsRoute(http.MethodGet, "/streams/{streamType}", webApp.HandleGetStreams)
 
 	webApp.Get("/openapi/openapi-spec.json", HandleOpenapiSpec)
 	SwaggerUiServer(webApp, "/openapi")

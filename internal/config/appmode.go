@@ -8,14 +8,16 @@ import (
 
 type AppMode string
 
+const appModeKey = "EVENT_STORE_MODE"
+
 const (
 	Development = AppMode("development")
 	Staging     = AppMode("staging")
 	Production  = AppMode("production")
 )
 
-func NewFromEnv(key string) AppMode {
-	modeStr := os.Getenv(key)
+func NewFromEnv() AppMode {
+	modeStr := os.Getenv(appModeKey)
 	var mode AppMode
 
 	switch strings.ToLower(modeStr) {

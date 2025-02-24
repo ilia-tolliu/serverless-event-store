@@ -14,11 +14,10 @@ import (
 	"time"
 )
 
-const AppModeKey = "EVENT_STORE_MODE"
 const WebShutdownTimeout = 5 * time.Second
 
 func main() {
-	mode := config.NewFromEnv(AppModeKey)
+	mode := config.NewFromEnv()
 	log := logger.New(mode)
 	defer eserror.Ignore(log.Sync)
 

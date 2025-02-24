@@ -84,7 +84,7 @@ export class AwsEventStoreStack extends cdk.Stack {
             memorySize: 1024,
             role: esServiceRole,
             environment: {
-                EVENT_STORE_MODE: 'development'
+                EVENT_STORE_MODE: 'staging'
             },
             loggingFormat: LoggingFormat.JSON
         })
@@ -98,11 +98,9 @@ export class AwsEventStoreStack extends cdk.Stack {
 
     private addNotifications(esTable: TableV2) {
         const esTopic = new aws_sns.Topic(this, 'EsTopic', {
-            topicName: 'EsTopic',
         })
 
         const cdcRule = new aws_events.Rule(this, 'EsChangesRule', {
-            ruleName: 'EsChangeRule',
             eventPattern: {
                 source: ['aws.dynamodb'],
                 detail: {
@@ -124,13 +122,23 @@ export class AwsEventStoreStack extends cdk.Stack {
     }
 
     private addSsmParameters(esTable: TableV2) {
-        new StringParameter(this, 'EsTableName', {
+        new StringParameter(this, 'DevelopmentEsTableName', {
             parameterName: '/development/event-store/DYNAMODB_TABLE_NAME',
             stringValue: esTable.tableName,
         });
 
-        new StringParameter(this, 'EsPort', {
+        new StringParameter(this, 'DevelopmentEsPort', {
             parameterName: '/development/event-store/PORT',
+            stringValue: '8080',
+        });
+
+        new StringParameter(this, 'StagingEsTableName', {
+            parameterName: '/staging/event-store/DYNAMODB_TABLE_NAME',
+            stringValue: esTable.tableName,
+        });
+
+        new StringParameter(this, 'StagingEsPort', {
+            parameterName: '/staging/event-store/PORT',
             stringValue: '8080',
         });
     }

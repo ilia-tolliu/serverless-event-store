@@ -2,7 +2,15 @@ import * as cdk from 'aws-cdk-lib';
 import {aws_dynamodb, aws_events, aws_events_targets, aws_sns, CfnOutput} from 'aws-cdk-lib';
 import {Construct} from 'constructs';
 import {ProjectionType, StreamViewType, TableV2} from "aws-cdk-lib/aws-dynamodb";
-import {Architecture, Code, Function, FunctionUrl, FunctionUrlAuthType, Runtime} from "aws-cdk-lib/aws-lambda";
+import {
+    Architecture,
+    Code,
+    Function,
+    FunctionUrl,
+    FunctionUrlAuthType,
+    LoggingFormat,
+    Runtime
+} from "aws-cdk-lib/aws-lambda";
 import * as path from "node:path";
 import {ManagedPolicy, Role, ServicePrincipal} from "aws-cdk-lib/aws-iam";
 import {StringParameter} from 'aws-cdk-lib/aws-ssm';
@@ -76,7 +84,8 @@ export class AwsEventStoreStack extends cdk.Stack {
             role: esServiceRole,
             environment: {
                 EVENT_STORE_MODE: 'development'
-            }
+            },
+            loggingFormat: LoggingFormat.JSON
         })
     }
 

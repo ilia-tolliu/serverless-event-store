@@ -10,7 +10,7 @@ build:
     (cd ./build && zip -r ../function.zip .)
 
 deploy: build
-    (cd infrastructure/aws-event-store && cdk deploy)
+    (cd _infrastructure/aws-event-store && cdk deploy)
 
 describe:
     aws cloudformation describe-stacks --stack-name AwsEventStoreStack | jq '.Stacks | .[] | .Outputs | reduce .[] as $i ({}; .[$i.OutputKey] = $i.OutputValue)'

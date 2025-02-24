@@ -15,26 +15,26 @@ type EsConfig struct {
 	TableName string
 }
 
-func FromAws(ctx context.Context, mode AppMode, awsConfig aws.Config, log *zap.SugaredLogger) (EsConfig, error) {
+func FromAws(ctx context.Context, mode AppMode, awsConfig aws.Config, log *zap.SugaredLogger) (*EsConfig, error) {
 	path := configPrefix(mode)
 	log.Infow("loading configuration", "path", path)
 
 	params, err := loadSsmParams(ctx, awsConfig, path)
 	if err != nil {
-		return EsConfig{}, err
+		return nil, err
 	}
 
 	port, err := extractParameter(params, "PORT")
 	if err != nil {
-		return EsConfig{}, err
+		return nil, err
 	}
 
 	tableName, err := extractParameter(params, "DYNAMODB_TABLE_NAME")
 	if err != nil {
-		return EsConfig{}, err
+		return nil, err
 	}
 
-	return EsConfig{
+	return &EsConfig{
 		Port:      port,
 		TableName: tableName,
 	}, nil

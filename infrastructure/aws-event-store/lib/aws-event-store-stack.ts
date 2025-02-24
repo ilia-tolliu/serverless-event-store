@@ -44,7 +44,7 @@ export class AwsEventStoreStack extends cdk.Stack {
             dynamoStream: StreamViewType.NEW_IMAGE
         })
 
-        const parameterTableName = new StringParameter(this, 'EsTableName', {
+        new StringParameter(this, 'EsTableName', {
             parameterName: '/development/event-store/DYNAMODB_TABLE_NAME',
             stringValue: esTable.tableName,
         });
@@ -52,13 +52,13 @@ export class AwsEventStoreStack extends cdk.Stack {
         const esServiceRole = new Role(this, 'EsServiceRole', {
             assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
         })
-
         esServiceRole.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'))
+        esServiceRole.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName('AmazonSSMReadOnlyAccess'))
 
         const esLambda = new Function(this, 'EsLambda', {
             runtime: Runtime.PROVIDED_AL2023,
             architecture: Architecture.ARM_64,
-            handler: 'main',
+            handler: 'bootstrap',
             code: Code.fromAsset(path.join(__dirname, '../../../function.zip')),
             memorySize: 1024,
             role: esServiceRole,
@@ -67,7 +67,7 @@ export class AwsEventStoreStack extends cdk.Stack {
             }
         })
 
-        const parameterPort = new StringParameter(this, 'EsPort', {
+        new StringParameter(this, 'EsPort', {
             parameterName: '/development/event-store/PORT',
             stringValue: '8080',
         });
@@ -98,12 +98,6 @@ export class AwsEventStoreStack extends cdk.Stack {
         })
 
         cdcRule.addTarget(new aws_events_targets.SnsTopic(snsTopic))
-        // The code that defines your stack goes here
-
-        // example resource
-        // const queue = new sqs.Queue(this, 'AwsEventStoreQueue', {
-        //   visibilityTimeout: cdk.Duration.seconds(300)
-        // });
 
         new CfnOutput(this, 'OutputEsDynamoDbTable', {key: 'EsDynamoDbTable', value: esTable.tableName})
         new CfnOutput(this, 'OutputEsSnsTopic', {key: 'EsSnsTopic', value: snsTopic.topicArn})

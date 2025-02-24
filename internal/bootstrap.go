@@ -9,11 +9,13 @@ import (
 	"github.com/ilia-tolliu-go-event-store/internal/repo"
 	"github.com/ilia-tolliu-go-event-store/internal/webapp"
 	"go.uber.org/zap"
-	"net/http"
 	"runtime"
+	"time"
 )
 
-func BootstrapEsServer(mode config.AppMode, log *zap.SugaredLogger) (*http.Server, error) {
+const WebShutdownTimeout = 5 * time.Second
+
+func BootstrapWebApp(mode config.AppMode, log *zap.SugaredLogger) (*webapp.WebApp, *config.EsConfig, error) {
 	startupCtx := context.Background() // todo: maybe use context with deadline?
 
 	log.Infow("startup", "GOMAXPROCS", runtime.GOMAXPROCS(0))
@@ -21,12 +23,12 @@ func BootstrapEsServer(mode config.AppMode, log *zap.SugaredLogger) (*http.Serve
 
 	awsConfig, err := awsconfig.LoadDefaultConfig(startupCtx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load AWS SDK config, %w", err)
+		return nil, nil, fmt.Errorf("failed to load AWS SDK config, %w", err)
 	}
 
 	esConfig, err := config.FromAws(startupCtx, mode, awsConfig, log)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load config from AWS, %w", err)
+		return nil, nil, fmt.Errorf("failed to load config from AWS, %w", err)
 	}
 	log.Infow("startup", "config", esConfig)
 
@@ -34,10 +36,6 @@ func BootstrapEsServer(mode config.AppMode, log *zap.SugaredLogger) (*http.Serve
 	esRepo := repo.NewEsRepo(dynamoDb, esConfig.TableName)
 
 	webApp := webapp.NewEsWebApp(esRepo, log)
-	server := &http.Server{
-		Addr:    fmt.Sprintf(":%s", esConfig.Port),
-		Handler: webApp,
-	}
 
-	return server, nil
+	return webApp, esConfig, nil
 }

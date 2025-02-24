@@ -8,13 +8,11 @@ import (
 	"github.com/ilia-tolliu-go-event-store/internal/eserror"
 	"github.com/ilia-tolliu-go-event-store/internal/logger"
 	"go.uber.org/zap"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 )
-
-const WebShutdownTimeout = 5 * time.Second
 
 func main() {
 	mode := config.NewFromEnv()
@@ -29,9 +27,13 @@ func main() {
 }
 
 func run(mode config.AppMode, log *zap.SugaredLogger) error {
-	server, err := internal.BootstrapEsServer(mode, log)
+	webApp, esConfig, err := internal.BootstrapWebApp(mode, log)
 	if err != nil {
 		return err
+	}
+	server := &http.Server{
+		Addr:    fmt.Sprintf(":%s", esConfig.Port),
+		Handler: webApp,
 	}
 
 	shutdownChan := make(chan os.Signal, 1)
@@ -50,7 +52,7 @@ func run(mode config.AppMode, log *zap.SugaredLogger) error {
 		log.Infow("shutdown", "status", "shutdown started", "signal", sig)
 		defer log.Infow("shutdown", "status", "shutdown complete", "signal", sig)
 
-		ctx, cancel := context.WithTimeout(context.Background(), WebShutdownTimeout)
+		ctx, cancel := context.WithTimeout(context.Background(), internal.WebShutdownTimeout)
 		defer cancel()
 
 		if err := server.Shutdown(ctx); err != nil {

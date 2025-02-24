@@ -1,11 +1,12 @@
 import * as cdk from 'aws-cdk-lib';
 import {aws_dynamodb, aws_events, aws_events_targets, aws_sns, CfnOutput} from 'aws-cdk-lib';
 import {Construct} from 'constructs';
-import {ProjectionType, StreamViewType} from "aws-cdk-lib/aws-dynamodb";
-import {Architecture, Code, Function, FunctionUrlAuthType, Runtime} from "aws-cdk-lib/aws-lambda";
+import {ProjectionType, StreamViewType, TableV2} from "aws-cdk-lib/aws-dynamodb";
+import {Architecture, Code, Function, FunctionUrl, FunctionUrlAuthType, Runtime} from "aws-cdk-lib/aws-lambda";
 import * as path from "node:path";
 import {ManagedPolicy, Role, ServicePrincipal} from "aws-cdk-lib/aws-iam";
 import {StringParameter} from 'aws-cdk-lib/aws-ssm';
+import {Topic} from "aws-cdk-lib/aws-sns";
 
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
 
@@ -13,7 +14,21 @@ export class AwsEventStoreStack extends cdk.Stack {
     constructor(scope: Construct, id: string, props?: cdk.StackProps) {
         super(scope, id, props);
 
-        const esTable = new aws_dynamodb.TableV2(this, 'EsTable', {
+        const esTable = this.makeDynamoDbTable()
+
+        const esLambda = this.makeLambdaFunction()
+
+        const esUrl = this.addLambdaFunctionUrl(esLambda);
+
+        const snsTopic = this.addNotifications(esTable)
+
+        this.addSsmParameters(esTable)
+
+        this.makeStackOutputs(esTable, esLambda, esUrl, snsTopic)
+    }
+
+    private makeDynamoDbTable() {
+        return new aws_dynamodb.TableV2(this, 'EsTable', {
             partitionKey: {
                 name: 'PK',
                 type: aws_dynamodb.AttributeType.STRING,
@@ -43,19 +58,16 @@ export class AwsEventStoreStack extends cdk.Stack {
             ],
             dynamoStream: StreamViewType.NEW_IMAGE
         })
+    }
 
-        new StringParameter(this, 'EsTableName', {
-            parameterName: '/development/event-store/DYNAMODB_TABLE_NAME',
-            stringValue: esTable.tableName,
-        });
-
+    private makeLambdaFunction() {
         const esServiceRole = new Role(this, 'EsServiceRole', {
             assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
         })
         esServiceRole.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'))
         esServiceRole.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName('AmazonSSMReadOnlyAccess'))
 
-        const esLambda = new Function(this, 'EsLambda', {
+        return new Function(this, 'EsLambda', {
             runtime: Runtime.PROVIDED_AL2023,
             architecture: Architecture.ARM_64,
             handler: 'bootstrap',
@@ -66,17 +78,16 @@ export class AwsEventStoreStack extends cdk.Stack {
                 EVENT_STORE_MODE: 'development'
             }
         })
+    }
 
-        new StringParameter(this, 'EsPort', {
-            parameterName: '/development/event-store/PORT',
-            stringValue: '8080',
-        });
-
-        const esUrl = esLambda.addFunctionUrl({
+    private addLambdaFunctionUrl(fn: Function) {
+        return fn.addFunctionUrl({
             authType: FunctionUrlAuthType.NONE // todo: use AWS_IAM auth type
         })
+    }
 
-        const snsTopic = new aws_sns.Topic(this, 'EsTopic', {
+    private addNotifications(esTable: TableV2) {
+        const esTopic = new aws_sns.Topic(this, 'EsTopic', {
             topicName: 'EsTopic',
         })
 
@@ -97,10 +108,26 @@ export class AwsEventStoreStack extends cdk.Stack {
             }
         })
 
-        cdcRule.addTarget(new aws_events_targets.SnsTopic(snsTopic))
+        cdcRule.addTarget(new aws_events_targets.SnsTopic(esTopic))
 
+        return esTopic
+    }
+
+    private addSsmParameters(esTable: TableV2) {
+        new StringParameter(this, 'EsTableName', {
+            parameterName: '/development/event-store/DYNAMODB_TABLE_NAME',
+            stringValue: esTable.tableName,
+        });
+
+        new StringParameter(this, 'EsPort', {
+            parameterName: '/development/event-store/PORT',
+            stringValue: '8080',
+        });
+    }
+
+    private makeStackOutputs(esTable: TableV2, esLambda: Function, esUrl: FunctionUrl, esTopic: Topic,) {
         new CfnOutput(this, 'OutputEsDynamoDbTable', {key: 'EsDynamoDbTable', value: esTable.tableName})
-        new CfnOutput(this, 'OutputEsSnsTopic', {key: 'EsSnsTopic', value: snsTopic.topicArn})
+        new CfnOutput(this, 'OutputEsSnsTopic', {key: 'EsSnsTopic', value: esTopic.topicArn})
         new CfnOutput(this, 'OutputEsLogGroup', {key: 'EsLogGroup', value: esLambda.logGroup.logGroupName})
         new CfnOutput(this, 'OutputEsUrl', {key: 'EsUrl', value: esUrl.url})
     }

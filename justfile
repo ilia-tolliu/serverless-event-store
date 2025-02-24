@@ -14,3 +14,6 @@ deploy: build
 
 describe:
     aws cloudformation describe-stacks --stack-name AwsEventStoreStack | jq '.Stacks | .[] | .Outputs | reduce .[] as $i ({}; .[$i.OutputKey] = $i.OutputValue)'
+
+diff:
+    (cd _infrastructure/aws-event-store && cdk diff)

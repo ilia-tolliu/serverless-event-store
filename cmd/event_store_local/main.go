@@ -3,18 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
-	awsconfig "github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/ilia-tolliu-go-event-store/internal"
 	"github.com/ilia-tolliu-go-event-store/internal/config"
 	"github.com/ilia-tolliu-go-event-store/internal/eserror"
 	"github.com/ilia-tolliu-go-event-store/internal/logger"
-	"github.com/ilia-tolliu-go-event-store/internal/repo"
-	"github.com/ilia-tolliu-go-event-store/internal/webapp"
 	"go.uber.org/zap"
-	"net/http"
 	"os"
 	"os/signal"
-	"runtime"
 	"syscall"
 	"time"
 )
@@ -35,45 +30,24 @@ func main() {
 }
 
 func run(mode config.AppMode, log *zap.SugaredLogger) error {
-	startupCtx := context.Background()
-
-	log.Infow("startup", "GOMAXPROCS", runtime.GOMAXPROCS(0))
-	log.Infow("startup", "mode", mode.String())
-
-	awsConfig, err := awsconfig.LoadDefaultConfig(startupCtx)
+	server, err := internal.BootstrapEsServer(mode, log)
 	if err != nil {
-		return fmt.Errorf("failed to load AWS SDK config, %w", err)
+		return err
 	}
 
-	esConfig, err := config.FromAws(startupCtx, mode, awsConfig, log)
-	if err != nil {
-		return fmt.Errorf("failed to load config from AWS, %w", err)
-	}
-	log.Infow("startup", "config", esConfig)
+	shutdownChan := make(chan os.Signal, 1)
+	signal.Notify(shutdownChan, syscall.SIGINT, syscall.SIGTERM)
 
-	dynamoDb := dynamodb.NewFromConfig(awsConfig)
-	esRepo := repo.NewEsRepo(dynamoDb, esConfig.TableName)
-
-	webApp := webapp.NewEsWebApp(esRepo, log)
-	server := http.Server{
-		Addr:    ":8080",
-		Handler: webApp,
-	}
-
-	shutdown := make(chan os.Signal, 1)
-	signal.Notify(shutdown, syscall.SIGINT, syscall.SIGTERM)
-
-	serverErrors := make(chan error, 1)
-
+	serverErrorsChan := make(chan error, 1)
 	go func() {
 		log.Infow("startup", "status", "router starting", "host", server.Addr)
-		serverErrors <- server.ListenAndServe()
+		serverErrorsChan <- server.ListenAndServe()
 	}()
 
 	select {
-	case err := <-serverErrors:
+	case err := <-serverErrorsChan:
 		return fmt.Errorf("server error: %w", err)
-	case sig := <-shutdown:
+	case sig := <-shutdownChan:
 		log.Infow("shutdown", "status", "shutdown started", "signal", sig)
 		defer log.Infow("shutdown", "status", "shutdown complete", "signal", sig)
 

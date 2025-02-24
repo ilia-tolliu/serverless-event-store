@@ -11,6 +11,7 @@ import (
 )
 
 type EsConfig struct {
+	Port      string
 	TableName string
 }
 
@@ -23,12 +24,18 @@ func FromAws(ctx context.Context, mode AppMode, awsConfig aws.Config, log *zap.S
 		return EsConfig{}, err
 	}
 
+	port, err := extractParameter(params, "PORT")
+	if err != nil {
+		return EsConfig{}, err
+	}
+
 	tableName, err := extractParameter(params, "DYNAMODB_TABLE_NAME")
 	if err != nil {
 		return EsConfig{}, err
 	}
 
 	return EsConfig{
+		Port:      port,
 		TableName: tableName,
 	}, nil
 }

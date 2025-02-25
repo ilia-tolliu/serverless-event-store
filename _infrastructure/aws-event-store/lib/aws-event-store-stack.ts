@@ -17,6 +17,7 @@ import {StringParameter} from 'aws-cdk-lib/aws-ssm';
 import {Topic} from "aws-cdk-lib/aws-sns";
 import {CfnPipe, CfnPipeProps} from "aws-cdk-lib/aws-pipes"
 import {LogGroup} from "aws-cdk-lib/aws-logs";
+import {esConfig} from "./esConfig";
 
 export class AwsEventStoreStack extends cdk.Stack {
     constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -154,23 +155,16 @@ export class AwsEventStoreStack extends cdk.Stack {
     }
 
     private addSsmParameters(esTable: TableV2) {
-        new StringParameter(this, 'DevelopmentEsTableName', {
-            parameterName: '/development/event-store/DYNAMODB_TABLE_NAME',
+        const appMode = esConfig.appMode
+        const prefix = appMode.charAt(0).toUpperCase() + appMode.slice(1)
+
+        new StringParameter(this, `${prefix}EsTableName`, {
+            parameterName: `/${appMode}/event-store/DYNAMODB_TABLE_NAME`,
             stringValue: esTable.tableName,
         });
 
-        new StringParameter(this, 'DevelopmentEsPort', {
-            parameterName: '/development/event-store/PORT',
-            stringValue: '8080',
-        });
-
-        new StringParameter(this, 'StagingEsTableName', {
-            parameterName: '/staging/event-store/DYNAMODB_TABLE_NAME',
-            stringValue: esTable.tableName,
-        });
-
-        new StringParameter(this, 'StagingEsPort', {
-            parameterName: '/staging/event-store/PORT',
+        new StringParameter(this, `${prefix}EsPort`, {
+            parameterName: `/${appMode}/event-store/PORT`,
             stringValue: '8080',
         });
     }

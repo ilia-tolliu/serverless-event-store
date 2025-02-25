@@ -1,5 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
-import {aws_dynamodb, aws_events, aws_events_targets, aws_sns, CfnOutput} from 'aws-cdk-lib';
+import {aws_dynamodb, aws_sns, CfnOutput} from 'aws-cdk-lib';
 import {Construct} from 'constructs';
 import {ProjectionType, StreamViewType, TableV2} from "aws-cdk-lib/aws-dynamodb";
 import {
@@ -15,8 +15,8 @@ import * as path from "node:path";
 import {ManagedPolicy, Role, ServicePrincipal} from "aws-cdk-lib/aws-iam";
 import {StringParameter} from 'aws-cdk-lib/aws-ssm';
 import {Topic} from "aws-cdk-lib/aws-sns";
-
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
+import {CfnPipe, CfnPipeProps} from "aws-cdk-lib/aws-pipes"
+import {LogGroup} from "aws-cdk-lib/aws-logs";
 
 export class AwsEventStoreStack extends cdk.Stack {
     constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -24,11 +24,13 @@ export class AwsEventStoreStack extends cdk.Stack {
 
         const esTable = this.makeDynamoDbTable()
 
-        const esLambda = this.makeLambdaFunction()
+        const esLogs = new LogGroup(this, "EsLogs")
+
+        const esLambda = this.makeLambdaFunction(esLogs)
 
         const esUrl = this.addLambdaFunctionUrl(esLambda);
 
-        const snsTopic = this.addNotifications(esTable)
+        const snsTopic = this.addNotifications(esTable, esLogs)
 
         this.addSsmParameters(esTable)
 
@@ -68,10 +70,11 @@ export class AwsEventStoreStack extends cdk.Stack {
         })
     }
 
-    private makeLambdaFunction() {
-        const esServiceRole = new Role(this, 'EsServiceRole', {
+    private makeLambdaFunction(esLogs: LogGroup) {
+        const esServiceRole = new Role(this, 'EsLambdaRole', {
             assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
         })
+
         esServiceRole.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'))
         esServiceRole.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName('AmazonSSMReadOnlyAccess'))
         esServiceRole.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName('AmazonDynamoDBFullAccess'));
@@ -86,7 +89,8 @@ export class AwsEventStoreStack extends cdk.Stack {
             environment: {
                 EVENT_STORE_MODE: 'staging'
             },
-            loggingFormat: LoggingFormat.JSON
+            loggingFormat: LoggingFormat.JSON,
+            logGroup: esLogs
         })
     }
 
@@ -96,27 +100,55 @@ export class AwsEventStoreStack extends cdk.Stack {
         })
     }
 
-    private addNotifications(esTable: TableV2) {
-        const esTopic = new aws_sns.Topic(this, 'EsTopic', {
-        })
+    private addNotifications(esTable: TableV2, esLogs: LogGroup) {
+        const esTopic = new aws_sns.Topic(this, 'EsTopic', {})
 
-        const cdcRule = new aws_events.Rule(this, 'EsChangesRule', {
-            eventPattern: {
-                source: ['aws.dynamodb'],
-                detail: {
-                    dynamodb: {
-                        Keys: {
-                            SK: {
-                                N: ["0"]
-                            }
-                        }
-                    },
-                    eventSourceArn: [esTable.tableStreamArn]
+        const pipeRole = new Role(this, 'EsPipeRole', {
+            assumedBy: new ServicePrincipal('pipes.amazonaws.com'),
+        })
+        // pipeRole.addManagedPolicy('')
+        esTable.grantStreamRead(pipeRole)
+        esLogs.grantWrite(pipeRole)
+        esTopic.grantPublish(pipeRole)
+
+        new CfnPipe(this, 'EsPipe', {
+            roleArn: pipeRole.roleArn,
+            source: esTable.tableStreamArn!,
+            sourceParameters: {
+                dynamoDbStreamParameters: {
+                    startingPosition: 'LATEST'
                 },
-            }
-        })
+                filterCriteria: {
+                    filters: [{
+                        pattern: `{ 
+                            "dynamodb": { 
+                                "NewImage": { 
+                                    "RecordType": { 
+                                        "S": ["stream"] 
+                                    } 
+                                } 
+                            } 
+                        }`
+                    }]
+                },
+            },
+            target: esTopic.topicArn,
+            targetParameters: {
+                inputTemplate: `{
+                    "StreamId": <$.dynamodb.Keys.PK.S>,
+                    "StreamType": <$.dynamodb.NewImage.StreamType.S>,
+                    "StreamRevision": <$.dynamodb.NewImage.StreamRevision.N>
+                }`
+            },
+            logConfiguration: {
+                includeExecutionData: ['ALL'],
+                level: 'ERROR',
+                cloudwatchLogsLogDestination: {
+                    logGroupArn: esLogs.logGroupArn,
+                }
+            },
 
-        cdcRule.addTarget(new aws_events_targets.SnsTopic(esTopic))
+        } as CfnPipeProps)
 
         return esTopic
     }

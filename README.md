@@ -66,3 +66,28 @@ An event also represents an atomic and consistent update to an entity.
 * Events are appended with sequential revision numbers without gaps.
 * Conflicting events (with already existing revision number) are rejected.
 
+## Using Event Store in your system
+
+Event store has two apis:
+
+* HTTP API for creating streams, appending events and reading events
+* SNS channel that will notify about all streams' updates
+
+Use HTTP API to create streams and append events in command handlers.
+
+Use notifications to trigger updates in your read models and reactors. 
+A notification message looks like this:
+
+```json
+  {
+    "StreamId": "2886e475-d5cc-40f7-aec5-401071388b3c",
+    "StreamType": "test-stream-type",
+    "StreamRevision": "18"
+  }
+```
+
+You may subscribe to these notifications with e.g. SQS queue 
+and apply SNS subscription filtering by StreamType.
+
+Once your component gets a notification, use 
+`GET /streams/{streamType}/{streamId}/event` endpoint to read the stream events.

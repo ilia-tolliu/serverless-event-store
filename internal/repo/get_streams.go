@@ -3,13 +3,17 @@ package repo
 import (
 	"context"
 	"fmt"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/ilia-tolliu-go-event-store/internal/estypes"
 	"time"
 )
 
 func (r *EsRepo) GetStreams(ctx context.Context, streamType string, updatedAfter time.Time, streamNextPageKey string) (estypes.StreamPage, error) {
-	streamsQuery, err := PrepareDbStreamsQuery(r.tableName, streamType, updatedAfter, streamNextPageKey)
+	streamsQuery, err := prepareStreamsQuery(r.tableName, streamType, updatedAfter, streamNextPageKey)
 	if err != nil {
 		return estypes.StreamPage{}, fmt.Errorf("failed to prepare DbStreamsQuery: %w", err)
 	}
@@ -30,7 +34,7 @@ func (r *EsRepo) GetStreams(ctx context.Context, streamType string, updatedAfter
 	}
 
 	for _, item := range output.Items {
-		var dbStream DbStreamCreate
+		var dbStream DbStream
 		err = attributevalue.UnmarshalMap(item, &dbStream)
 		if err != nil {
 			return estypes.StreamPage{}, fmt.Errorf("failed to unmarshal stream from DB: %w", err)
@@ -38,7 +42,7 @@ func (r *EsRepo) GetStreams(ctx context.Context, streamType string, updatedAfter
 
 		stream, err := IntoStream(dbStream)
 		if err != nil {
-			return estypes.StreamPage{}, fmt.Errorf("failed to convert DbStreamCreate into Stream [%s]: %w", dbStream.Pk, err)
+			return estypes.StreamPage{}, fmt.Errorf("failed to convert DbStream into Stream [%s]: %w", dbStream.Pk, err)
 		}
 
 		streams = append(streams, stream)
@@ -53,4 +57,39 @@ func (r *EsRepo) GetStreams(ctx context.Context, streamType string, updatedAfter
 	}
 
 	return page, nil
+}
+
+func prepareStreamsQuery(tableName string, streamType string, updatedAfter time.Time, nextPageKey string) (*dynamodb.QueryInput, error) {
+	keyCond, err := expression.NewBuilder().
+		WithKeyCondition(
+			expression.Key("StreamType").Equal(expression.Value(streamType)).
+				And(expression.Key("UpdatedAt").GreaterThanEqual(expression.Value(updatedAfter))),
+		).
+		Build()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build key condition: %w", err)
+	}
+
+	var exclusiveStartKey map[string]types.AttributeValue
+	if nextPageKey != "" {
+		exclusiveStartKey, err = ParseNextPageKey(nextPageKey)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse next page key: %w", err)
+		}
+	}
+
+	query := &dynamodb.QueryInput{
+		KeyConditionExpression:    keyCond.KeyCondition(),
+		ExpressionAttributeNames:  keyCond.Names(),
+		ExpressionAttributeValues: keyCond.Values(),
+		TableName:                 aws.String(tableName),
+		IndexName:                 aws.String(streamIndexName),
+		ScanIndexForward:          aws.Bool(true),
+	}
+
+	if nextPageKey != "" {
+		query.ExclusiveStartKey = exclusiveStartKey
+	}
+
+	return query, nil
 }

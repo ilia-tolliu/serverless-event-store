@@ -3,13 +3,16 @@ package repo
 import (
 	"context"
 	"fmt"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/google/uuid"
 	"github.com/ilia-tolliu-go-event-store/internal/estypes"
 )
 
 func (r *EsRepo) GetEvents(ctx context.Context, streamId uuid.UUID, afterRevision int) (estypes.EventPage, error) {
-	eventsQuery, err := PrepareDbEventsQuery(r.tableName, streamId, afterRevision)
+	eventsQuery, err := prepareEventsQuery(r.tableName, streamId, afterRevision)
 	if err != nil {
 		return estypes.EventPage{}, fmt.Errorf("failed to prepare DbEventsQuery: %w", err)
 	}
@@ -45,4 +48,32 @@ func (r *EsRepo) GetEvents(ctx context.Context, streamId uuid.UUID, afterRevisio
 	}
 
 	return page, nil
+}
+
+func prepareEventsQuery(tableName string, streamId uuid.UUID, afterRevision int) (*dynamodb.QueryInput, error) {
+	keyCond, err := expression.NewBuilder().
+		WithKeyCondition(expression.Key("PK").Equal(expression.Value(streamId.String()))).
+		Build()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build key condition: %w", err)
+	}
+
+	exclusiveStartKeySrc := map[string]any{
+		"PK": streamId.String(),
+		"SK": afterRevision,
+	}
+	exclusiveStartKey, err := attributevalue.MarshalMap(exclusiveStartKeySrc)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal exclusiveStartKey: %w", err)
+	}
+
+	query := &dynamodb.QueryInput{
+		KeyConditionExpression:    keyCond.KeyCondition(),
+		ExpressionAttributeNames:  keyCond.Names(),
+		ExpressionAttributeValues: keyCond.Values(),
+		ExclusiveStartKey:         exclusiveStartKey,
+		TableName:                 aws.String(tableName),
+	}
+
+	return query, nil
 }

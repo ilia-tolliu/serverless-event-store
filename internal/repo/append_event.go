@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/google/uuid"
@@ -22,12 +24,12 @@ func (r *EsRepo) AppendEvent(ctx context.Context, streamType string, streamId uu
 	}
 	event := estypes.NewEvent(streamId, revision, newEvent, now)
 
-	streamUpdate, err := PrepareDbStreamUpdate(r.tableName, stream)
+	streamUpdate, err := prepareStreamUpdate(r.tableName, stream)
 	if err != nil {
 		return estypes.Stream{}, err
 	}
 
-	eventPut, err := PrepareDbEventPut(r.tableName, event)
+	eventPut, err := PreparePutEventQuery(r.tableName, event)
 	if err != nil {
 		return estypes.Stream{}, err
 	}
@@ -48,4 +50,43 @@ func (r *EsRepo) AppendEvent(ctx context.Context, streamType string, streamId uu
 	}
 
 	return stream, nil
+}
+
+func prepareStreamUpdate(tableName string, stream estypes.Stream) (*types.Update, error) {
+	updateExpr, err := expression.NewBuilder().WithUpdate(
+		expression.
+			Set(expression.Name("StreamRevision"), expression.Value(stream.Revision)).
+			Set(expression.Name("UpdatedAt"), expression.Value(stream.UpdatedAt)),
+	).
+		WithCondition(expression.Name("StreamRevision").Equal(expression.Value(stream.Revision - 1))).
+		Build()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build update expression: %w", err)
+	}
+
+	streamKey := keyFromStream(stream)
+	streamKeyValue, err := attributevalue.MarshalMap(streamKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal stream key: %w", err)
+	}
+
+	update := types.Update{
+		Key:                       streamKeyValue,
+		TableName:                 aws.String(tableName),
+		UpdateExpression:          updateExpr.Update(),
+		ExpressionAttributeNames:  updateExpr.Names(),
+		ExpressionAttributeValues: updateExpr.Values(),
+		ConditionExpression:       updateExpr.Condition(),
+	}
+
+	return &update, nil
+}
+
+func keyFromStream(stream estypes.Stream) dbStreamKey {
+	dbStreamKey := dbStreamKey{
+		Pk: stream.StreamId.String(),
+		Sk: 0,
+	}
+
+	return dbStreamKey
 }

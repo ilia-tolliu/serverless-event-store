@@ -16,7 +16,7 @@ import (
 
 func main() {
 	mode := config.NewFromEnv()
-	log := logger.New(mode)
+	log := logger.New(config.Development)
 	defer eserror.Ignore(log.Sync)
 
 	err := run(mode, log)

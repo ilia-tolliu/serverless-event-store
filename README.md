@@ -9,7 +9,39 @@
 * AWS CloudWatch to collect logs
 * AWS CDK for infrastructure-as-a-code
 
-Usage of 
+## Setting up development environment
+
+### Prerequisites
+
+* Go language toolchain
+* Node.js of the latest LTS version for using CDK
+* AWS account
+* AWS CLI configured to your account
+* AWS CDK
+* Just command runner
+
+### Getting started
+
+* Go to `./_infrastructure/aws-event-store` and create `.env` file based on `.env.example`.
+* Bootstrap your AWS environment: `$ cdk bootstrap`
+* Build & deploy: `$ just deploy`
+
+The output of deploy step will contain resource references:
+
+```
+Outputs:
+AwsEventStoreStack.EsDynamoDbTable = AwsEventStoreStack-EsTable********
+AwsEventStoreStack.EsLogGroup = AwsEventStoreStack-EsLogs********
+AwsEventStoreStack.EsSnsTopic = arn:aws:sns:eu-central-1:********:AwsEventStoreStack-EsTopic********
+AwsEventStoreStack.EsUrl = https://********.lambda-url.********.on.aws/
+```
+
+You can also check this references later: `$ just describe`
+
+* Done! Event store is deployed and available for use in development.
+* Navigate to the Event Store url for interactive API specification.
+
+**NB! For production use Lambda Function URL should be updated to use AWS IAM authentication**
 
 ## What is an Event Store
 

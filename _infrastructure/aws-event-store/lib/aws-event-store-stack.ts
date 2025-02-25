@@ -107,7 +107,6 @@ export class AwsEventStoreStack extends cdk.Stack {
         const pipeRole = new Role(this, 'EsPipeRole', {
             assumedBy: new ServicePrincipal('pipes.amazonaws.com'),
         })
-        // pipeRole.addManagedPolicy('')
         esTable.grantStreamRead(pipeRole)
         esLogs.grantWrite(pipeRole)
         esTopic.grantPublish(pipeRole)

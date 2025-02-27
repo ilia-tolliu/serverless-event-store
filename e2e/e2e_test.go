@@ -17,26 +17,26 @@ import (
 	"github.com/ilia-tolliu-go-event-store/internal/config"
 	"github.com/stretchr/testify/require"
 	"testing"
-	"time"
 )
 
 func TestEventStore(t *testing.T) {
 	bootstrap(t)
 
-	streamId := testCreateStream(t, "test-stream", estypes.NewEsEvent{
+	createdStream := testCreateStream(t, "test-stream", estypes.NewEsEvent{
 		EventType: "stream-created",
-		Payload:   initialPayload,
+		Payload:   "payload1",
 	})
+	streamId := createdStream.StreamId
 
 	testReceiveNotification(t, esnotification.EsNotification{
-		StreamId:       streamId,
+		StreamId:       createdStream.StreamId,
 		StreamType:     "test-stream",
 		StreamRevision: 1,
 	})
 
-	testAppendEvent(t, "test-stream", streamId, 2, estypes.NewEsEvent{
+	appendedStream := testAppendEvent(t, "test-stream", streamId, 2, estypes.NewEsEvent{
 		EventType: "something-important-happened",
-		Payload:   secondPayload,
+		Payload:   "payload2",
 	})
 
 	testReceiveNotification(t, esnotification.EsNotification{
@@ -44,6 +44,24 @@ func TestEventStore(t *testing.T) {
 		StreamType:     "test-stream",
 		StreamRevision: 2,
 	})
+
+	initialEvent, secondEvent := testLoadTwoEvents(t, "test-stream", streamId)
+
+	require.Equal(t, estypes.Event{
+		StreamId:  streamId,
+		Revision:  1,
+		EventType: "stream-created",
+		Payload:   "payload1",
+		CreatedAt: createdStream.UpdatedAt,
+	}, initialEvent)
+
+	require.Equal(t, estypes.Event{
+		StreamId:  streamId,
+		Revision:  2,
+		EventType: "something-important-happened",
+		Payload:   "payload2",
+		CreatedAt: appendedStream.UpdatedAt,
+	}, secondEvent)
 }
 
 type testSqsQueue struct {
@@ -51,31 +69,10 @@ type testSqsQueue struct {
 	arn string
 }
 
-type payload1 struct {
-	Message string
-}
-
-type payload2 struct {
-	Message string
-	Amount  int
-	Moment  time.Time
-}
-
 var (
 	esHttpClient *httpclient.EsHttpClient
-	esSqsClient  *sqsclient.EsSqsClient
 
-	now = time.Now()
-
-	initialPayload = payload1{
-		Message: "I am payload1",
-	}
-
-	secondPayload = payload2{
-		Message: "I am payload2",
-		Amount:  123,
-		Moment:  now,
-	}
+	esSqsClient *sqsclient.EsSqsClient
 )
 
 func bootstrap(t *testing.T) {
@@ -85,6 +82,7 @@ func bootstrap(t *testing.T) {
 	}
 
 	testConfig := loadTestConfig(t, awsConfig)
+
 	sqsClient := sqs.NewFromConfig(awsConfig)
 	snsClient := sns.NewFromConfig(awsConfig)
 
@@ -123,7 +121,7 @@ func makeTestQueue(t *testing.T, sqsClient *sqs.Client) testSqsQueue {
 			QueueUrl: queueOutput.QueueUrl,
 		})
 		if err != nil {
-			t.Fatalf("failed to delete queue, %v", err)
+			t.Fatalf("failed to delete queue, %s %v", *queueOutput.QueueUrl, err)
 		}
 	})
 
@@ -212,7 +210,7 @@ type policyStatement struct {
 	Resource  *string           `json:",omitempty"`
 }
 
-func testCreateStream(t *testing.T, streamType string, initialEvent estypes.NewEsEvent) uuid.UUID {
+func testCreateStream(t *testing.T, streamType string, initialEvent estypes.NewEsEvent) *estypes.Stream {
 	stream, err := esHttpClient.CreateStream(streamType, initialEvent)
 	if err != nil {
 		t.Fatalf("failed to create stream: %v", err)
@@ -221,7 +219,7 @@ func testCreateStream(t *testing.T, streamType string, initialEvent estypes.NewE
 	require.NoError(t, stream.ShouldHaveRevision(1))
 	require.NoError(t, stream.ShouldHaveType(streamType))
 
-	return stream.StreamId
+	return stream
 }
 
 func testReceiveNotification(t *testing.T, expectedNotification esnotification.EsNotification) {
@@ -234,7 +232,7 @@ func testReceiveNotification(t *testing.T, expectedNotification esnotification.E
 	require.Equal(t, notifications[0], expectedNotification)
 }
 
-func testAppendEvent(t *testing.T, streamType string, streamId uuid.UUID, revision int, newEvent estypes.NewEsEvent) {
+func testAppendEvent(t *testing.T, streamType string, streamId uuid.UUID, revision int, newEvent estypes.NewEsEvent) *estypes.Stream {
 	stream, err := esHttpClient.AppendEvent(streamType, streamId, revision, newEvent)
 	if err != nil {
 		t.Fatalf("failed to append event: %#v", err)
@@ -243,4 +241,22 @@ func testAppendEvent(t *testing.T, streamType string, streamId uuid.UUID, revisi
 
 	require.NoError(t, stream.ShouldHaveRevision(revision))
 	require.NoError(t, stream.ShouldHaveType(streamType))
+	require.Equal(t, stream.StreamId, streamId)
+
+	return stream
+}
+
+func testLoadTwoEvents(t *testing.T, streamType string, streamId uuid.UUID) (estypes.Event, estypes.Event) {
+	eventIter := esHttpClient.GetEvents(streamType, streamId, 0)
+
+	events := make([]estypes.Event, 0)
+
+	for event, err := range eventIter {
+		require.NoError(t, err)
+		events = append(events, *event)
+	}
+
+	require.LessOrEqual(t, len(events), 2)
+
+	return events[0], events[1]
 }

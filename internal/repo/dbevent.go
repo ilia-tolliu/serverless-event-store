@@ -1,7 +1,6 @@
 package repo
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -22,23 +21,15 @@ type DbEvent struct {
 	CreatedAt  time.Time `dynamodbav:"CreatedAt"`
 }
 
-func FromEvent(event estypes.Event) (DbEvent, error) {
-	payload, err := json.MarshalIndent(event.Payload, "", "  ")
-	if err != nil {
-		return DbEvent{}, fmt.Errorf("failed to marshal event payload: %w", err)
-	}
-	payloadStr := string(payload)
-
-	dbEvent := DbEvent{
+func FromEvent(event estypes.Event) DbEvent {
+	return DbEvent{
 		Pk:         event.StreamId.String(),
 		Sk:         event.Revision,
 		RecordType: RecordTypeEvent,
 		EventType:  event.EventType,
-		Payload:    payloadStr,
+		Payload:    event.Payload,
 		CreatedAt:  event.CreatedAt,
 	}
-
-	return dbEvent, nil
 }
 
 func IntoEvent(dbEvent DbEvent) (estypes.Event, error) {
@@ -47,17 +38,11 @@ func IntoEvent(dbEvent DbEvent) (estypes.Event, error) {
 		return estypes.Event{}, fmt.Errorf("failed to parse streamId: %w", err)
 	}
 
-	payload := make(map[string]interface{})
-	err = json.Unmarshal([]byte(dbEvent.Payload), &payload)
-	if err != nil {
-		return estypes.Event{}, fmt.Errorf("failed to unmarshal event payload: %w", err)
-	}
-
 	event := estypes.Event{
 		StreamId:  streamId,
 		Revision:  dbEvent.Sk,
 		EventType: dbEvent.EventType,
-		Payload:   payload,
+		Payload:   dbEvent.Payload,
 		CreatedAt: dbEvent.CreatedAt,
 	}
 
@@ -65,10 +50,7 @@ func IntoEvent(dbEvent DbEvent) (estypes.Event, error) {
 }
 
 func PreparePutEventQuery(tableName string, event estypes.Event) (*types.Put, error) {
-	dbEvent, err := FromEvent(event)
-	if err != nil {
-		return nil, err
-	}
+	dbEvent := FromEvent(event)
 
 	value, err := attributevalue.MarshalMap(dbEvent)
 	if err != nil {

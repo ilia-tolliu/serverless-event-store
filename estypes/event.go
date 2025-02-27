@@ -6,11 +6,11 @@ import (
 )
 
 type Event struct {
-	StreamId  uuid.UUID `json:"streamId" dynamodbav:"PK,string"`
-	Revision  int       `json:"revision" dynamodbav:"SK"`
-	EventType string    `json:"eventType" dynamodbav:"eventType"`
-	Payload   any       `json:"payload" dynamodbav:"eventType"`
-	CreatedAt time.Time `json:"createdAt" dynamodbav:"createdAt"`
+	StreamId  uuid.UUID `json:"streamId"`
+	Revision  int       `json:"revision"`
+	EventType string    `json:"eventType"`
+	Payload   string    `json:"payload"`
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 func NewEvent(streamId uuid.UUID, revision int, newEvent NewEsEvent, now time.Time) Event {

@@ -3,18 +3,18 @@ package webapp
 import (
 	"context"
 	"fmt"
+	estypes2 "github.com/ilia-tolliu-go-event-store/estypes"
 	"github.com/ilia-tolliu-go-event-store/internal/eserror"
-	"github.com/ilia-tolliu-go-event-store/internal/estypes"
 	"github.com/ilia-tolliu-go-event-store/internal/esvalidate"
 	"net/http"
 )
 
 type appendEventRequest struct {
-	Event *estypes.NewEsEvent `json:"event,omitempty" validate:"required"`
+	Event *estypes2.NewEsEvent `json:"event,omitempty" validate:"required"`
 }
 
 type appendEventResponse struct {
-	Stream estypes.Stream `json:"stream"`
+	Stream estypes2.Stream `json:"stream"`
 }
 
 func (a *WebApp) HandleAppendEvent(ctx context.Context, r *http.Request) (Response, error) {

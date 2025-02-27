@@ -15,7 +15,12 @@ type EsConfig struct {
 	TableName string
 }
 
-func FromAws(ctx context.Context, mode AppMode, awsConfig aws.Config, log *zap.SugaredLogger) (*EsConfig, error) {
+type EsTestConfig struct {
+	EsUrl      string
+	EsSnsTopic string
+}
+
+func EsConfigFromAws(ctx context.Context, mode AppMode, awsConfig aws.Config, log *zap.SugaredLogger) (*EsConfig, error) {
 	path := configPrefix(mode)
 	log.Infow("loading configuration", "path", path)
 
@@ -37,6 +42,30 @@ func FromAws(ctx context.Context, mode AppMode, awsConfig aws.Config, log *zap.S
 	return &EsConfig{
 		Port:      port,
 		TableName: tableName,
+	}, nil
+}
+
+func EsTestConfigFromAws(ctx context.Context, mode AppMode, awsConfig aws.Config) (*EsTestConfig, error) {
+	path := configPrefix(mode)
+
+	params, err := loadSsmParams(ctx, awsConfig, path)
+	if err != nil {
+		return nil, err
+	}
+
+	esUrl, err := extractParameter(params, "ES_URL")
+	if err != nil {
+		return nil, err
+	}
+
+	esSnsTopic, err := extractParameter(params, "ES_SNS_TOPIC")
+	if err != nil {
+		return nil, err
+	}
+
+	return &EsTestConfig{
+		EsUrl:      esUrl,
+		EsSnsTopic: esSnsTopic,
 	}, nil
 }
 

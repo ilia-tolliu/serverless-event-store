@@ -26,7 +26,7 @@ func BootstrapWebApp(mode config.AppMode, log *zap.SugaredLogger) (*webapp.WebAp
 		return nil, nil, fmt.Errorf("failed to load AWS SDK config, %w", err)
 	}
 
-	esConfig, err := config.FromAws(startupCtx, mode, awsConfig, log)
+	esConfig, err := config.EsConfigFromAws(startupCtx, mode, awsConfig, log)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to load config from AWS, %w", err)
 	}

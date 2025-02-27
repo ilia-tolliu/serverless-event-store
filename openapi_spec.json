@@ -406,12 +406,6 @@
             "format": "int32",
             "example": 123
           },
-          "createdAt": {
-            "description": "Timestamp when the stream was created.",
-            "type": "string",
-            "format": "date-time",
-            "example": "2025-02-23T11:50:00Z"
-          },
           "updatedAt": {
             "description": "Timestamp when the stream was updated. I.e. time of the latest event of the stream.",
             "type": "string",
@@ -423,7 +417,6 @@
           "streamId",
           "streamType",
           "revision",
-          "createdAt",
           "updatedAt"
         ]
       },

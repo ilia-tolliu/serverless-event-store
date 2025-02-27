@@ -3,7 +3,7 @@ package repo
 import (
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/ilia-tolliu-go-event-store/internal/estypes"
+	"github.com/ilia-tolliu-go-event-store/estypes"
 	"time"
 )
 
@@ -16,7 +16,6 @@ type DbStream struct {
 	RecordType     string    `dynamodbav:"RecordType"`
 	StreamType     string    `dynamodbav:"StreamType"`
 	StreamRevision int       `dynamodbav:"StreamRevision"`
-	CreatedAt      time.Time `dynamodbav:"CreatedAt"`
 	UpdatedAt      time.Time `dynamodbav:"UpdatedAt"`
 }
 
@@ -32,7 +31,6 @@ func FromStream(stream estypes.Stream) DbStream {
 		RecordType:     RecordTypeStream,
 		StreamType:     stream.StreamType,
 		StreamRevision: stream.Revision,
-		CreatedAt:      stream.CreatedAt,
 		UpdatedAt:      stream.UpdatedAt,
 	}
 }
@@ -47,7 +45,6 @@ func IntoStream(dbStream DbStream) (estypes.Stream, error) {
 		StreamId:   streamId,
 		StreamType: dbStream.StreamType,
 		Revision:   dbStream.StreamRevision,
-		CreatedAt:  dbStream.CreatedAt,
 		UpdatedAt:  dbStream.UpdatedAt,
 	}
 

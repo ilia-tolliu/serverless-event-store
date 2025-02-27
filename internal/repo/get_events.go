@@ -8,40 +8,40 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/google/uuid"
-	"github.com/ilia-tolliu-go-event-store/internal/estypes"
+	estypes2 "github.com/ilia-tolliu-go-event-store/estypes"
 )
 
-func (r *EsRepo) GetEvents(ctx context.Context, streamId uuid.UUID, afterRevision int) (estypes.EventPage, error) {
+func (r *EsRepo) GetEvents(ctx context.Context, streamId uuid.UUID, afterRevision int) (estypes2.EventPage, error) {
 	eventsQuery, err := prepareEventsQuery(r.tableName, streamId, afterRevision)
 	if err != nil {
-		return estypes.EventPage{}, fmt.Errorf("failed to prepare DbEventsQuery: %w", err)
+		return estypes2.EventPage{}, fmt.Errorf("failed to prepare DbEventsQuery: %w", err)
 	}
 
 	output, err := r.dynamoDb.Query(ctx, eventsQuery)
 	if err != nil {
-		return estypes.EventPage{}, fmt.Errorf("failed to get events from DB: %w", err)
+		return estypes2.EventPage{}, fmt.Errorf("failed to get events from DB: %w", err)
 	}
 
-	events := make([]estypes.Event, 0, len(output.Items))
+	events := make([]estypes2.Event, 0, len(output.Items))
 	var lastEvaluatedRevision int
 
 	for _, item := range output.Items {
 		var dbEvent DbEvent
 		err = attributevalue.UnmarshalMap(item, &dbEvent)
 		if err != nil {
-			return estypes.EventPage{}, fmt.Errorf("failed to unmarshal event from DB: %w", err)
+			return estypes2.EventPage{}, fmt.Errorf("failed to unmarshal event from DB: %w", err)
 		}
 
 		event, err := IntoEvent(dbEvent)
 		if err != nil {
-			return estypes.EventPage{}, fmt.Errorf("failed to convert DbEvent into Event [%s::%d]: %w", streamId, dbEvent.Sk, err)
+			return estypes2.EventPage{}, fmt.Errorf("failed to convert DbEvent into Event [%s::%d]: %w", streamId, dbEvent.Sk, err)
 		}
 
 		lastEvaluatedRevision = event.Revision
 		events = append(events, event)
 	}
 
-	page := estypes.EventPage{
+	page := estypes2.EventPage{
 		Events:                events,
 		HasMore:               output.LastEvaluatedKey != nil,
 		LastEvaluatedRevision: lastEvaluatedRevision,

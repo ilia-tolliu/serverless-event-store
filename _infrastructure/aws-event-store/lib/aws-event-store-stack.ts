@@ -1,5 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
-import {aws_dynamodb, aws_sns, CfnOutput} from 'aws-cdk-lib';
+import {aws_dynamodb, CfnOutput} from 'aws-cdk-lib';
 import {Construct} from 'constructs';
 import {ProjectionType, StreamViewType, TableV2} from "aws-cdk-lib/aws-dynamodb";
 import {
@@ -14,7 +14,7 @@ import {
 import * as path from "node:path";
 import {ManagedPolicy, Role, ServicePrincipal} from "aws-cdk-lib/aws-iam";
 import {StringParameter} from 'aws-cdk-lib/aws-ssm';
-import {Topic} from "aws-cdk-lib/aws-sns";
+import {LoggingProtocol, Topic} from "aws-cdk-lib/aws-sns";
 import {CfnPipe, CfnPipeProps} from "aws-cdk-lib/aws-pipes"
 import {LogGroup} from "aws-cdk-lib/aws-logs";
 import {esConfig} from "./esConfig";
@@ -31,11 +31,11 @@ export class AwsEventStoreStack extends cdk.Stack {
 
         const esUrl = this.addLambdaFunctionUrl(esLambda);
 
-        const snsTopic = this.addNotifications(esTable, esLogs)
+        const esSnsTopic = this.addNotifications(esTable, esLogs)
 
-        this.addSsmParameters(esTable)
+        this.addSsmParameters(esTable, esUrl, esSnsTopic)
 
-        this.makeStackOutputs(esTable, esLambda, esUrl, snsTopic)
+        this.makeStackOutputs(esTable, esLambda, esUrl, esSnsTopic)
     }
 
     private makeDynamoDbTable() {
@@ -63,7 +63,6 @@ export class AwsEventStoreStack extends cdk.Stack {
                     projectionType: ProjectionType.INCLUDE,
                     nonKeyAttributes: [
                         'StreamRevision',
-                        'CreatedAt'
                     ]
                 }
             ],
@@ -102,17 +101,31 @@ export class AwsEventStoreStack extends cdk.Stack {
     }
 
     private addNotifications(esTable: TableV2, esLogs: LogGroup) {
-        const esTopic = new aws_sns.Topic(this, 'EsTopic', {})
+        const deliveryLoggingRole = new Role(this, 'EsDeliveryLoggingRole', {
+            assumedBy: new ServicePrincipal('sns.amazonaws.com'),
+        })
+        deliveryLoggingRole.addManagedPolicy(ManagedPolicy.fromAwsManagedPolicyName('service-role/AmazonSNSRole'))
 
-        const pipeRole = new Role(this, 'EsPipeRole', {
+        const esTopic = new Topic(this, 'EsTopic', {
+            loggingConfigs: [
+                {
+                    protocol: LoggingProtocol.SQS,
+                    successFeedbackSampleRate: 100,
+                    successFeedbackRole: deliveryLoggingRole,
+                    failureFeedbackRole: deliveryLoggingRole,
+                }
+            ]
+        })
+
+        const notificationsRole = new Role(this, 'EsNotificationRole', {
             assumedBy: new ServicePrincipal('pipes.amazonaws.com'),
         })
-        esTable.grantStreamRead(pipeRole)
-        esLogs.grantWrite(pipeRole)
-        esTopic.grantPublish(pipeRole)
+        esTable.grantStreamRead(notificationsRole)
+        esLogs.grantWrite(notificationsRole)
+        esTopic.grantPublish(notificationsRole)
 
         new CfnPipe(this, 'EsPipe', {
-            roleArn: pipeRole.roleArn,
+            roleArn: notificationsRole.roleArn,
             source: esTable.tableStreamArn!,
             sourceParameters: {
                 dynamoDbStreamParameters: {
@@ -153,7 +166,7 @@ export class AwsEventStoreStack extends cdk.Stack {
         return esTopic
     }
 
-    private addSsmParameters(esTable: TableV2) {
+    private addSsmParameters(esTable: TableV2, esUrl: FunctionUrl, snsTopic: Topic) {
         const appMode = esConfig.appMode
         const prefix = appMode.charAt(0).toUpperCase() + appMode.slice(1)
 
@@ -166,6 +179,16 @@ export class AwsEventStoreStack extends cdk.Stack {
             parameterName: `/${appMode}/event-store/PORT`,
             stringValue: '8080',
         });
+
+        new StringParameter(this, `${prefix}EsUrl`, {
+            parameterName: `/${appMode}/event-store/ES_URL`,
+            stringValue: esUrl.url,
+        })
+
+        new StringParameter(this, `${prefix}EsSnsTopic`, {
+            parameterName: `/${appMode}/event-store/ES_SNS_TOPIC`,
+            stringValue: snsTopic.topicArn,
+        })
     }
 
     private makeStackOutputs(esTable: TableV2, esLambda: Function, esUrl: FunctionUrl, esTopic: Topic,) {

@@ -7,8 +7,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/google/uuid"
+	"github.com/ilia-tolliu-go-event-store/estypes"
 	"github.com/ilia-tolliu-go-event-store/internal/eserror"
-	"github.com/ilia-tolliu-go-event-store/internal/estypes"
 )
 
 func (r *EsRepo) GetStream(ctx context.Context, streamId uuid.UUID) (estypes.Stream, error) {

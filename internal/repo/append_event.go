@@ -9,7 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/google/uuid"
-	"github.com/ilia-tolliu-go-event-store/internal/estypes"
+	"github.com/ilia-tolliu-go-event-store/estypes"
 	"time"
 )
 
@@ -19,7 +19,6 @@ func (r *EsRepo) AppendEvent(ctx context.Context, streamType string, streamId uu
 		StreamId:   streamId,
 		StreamType: streamType,
 		Revision:   revision,
-		CreatedAt:  now,
 		UpdatedAt:  now,
 	}
 	event := estypes.NewEvent(streamId, revision, newEvent, now)
@@ -64,7 +63,7 @@ func prepareStreamUpdate(tableName string, stream estypes.Stream) (*types.Update
 		return nil, fmt.Errorf("failed to build update expression: %w", err)
 	}
 
-	streamKey := keyFromStream(stream)
+	streamKey := keyFromStreamUpdate(stream)
 	streamKeyValue, err := attributevalue.MarshalMap(streamKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal stream key: %w", err)
@@ -82,7 +81,7 @@ func prepareStreamUpdate(tableName string, stream estypes.Stream) (*types.Update
 	return &update, nil
 }
 
-func keyFromStream(stream estypes.Stream) dbStreamKey {
+func keyFromStreamUpdate(stream estypes.Stream) dbStreamKey {
 	dbStreamKey := dbStreamKey{
 		Pk: stream.StreamId.String(),
 		Sk: 0,

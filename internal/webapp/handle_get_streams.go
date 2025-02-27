@@ -3,7 +3,7 @@ package webapp
 import (
 	"context"
 	"fmt"
-	"github.com/ilia-tolliu-go-event-store/internal/estypes"
+	"github.com/ilia-tolliu-go-event-store/estypes"
 	"net/http"
 	"time"
 )

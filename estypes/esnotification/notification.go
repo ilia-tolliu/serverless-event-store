@@ -1,4 +1,4 @@
-package estypes
+package esnotification
 
 import (
 	"github.com/google/uuid"

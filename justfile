@@ -21,4 +21,4 @@ diff:
     (cd _infrastructure/aws-event-store && cdk diff)
 
 test:
-    EVENT_STORE_MODE=staging go test ./e2e -count=1
+    EVENT_STORE_MODE=staging go test ./test -count=1

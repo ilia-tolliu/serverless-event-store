@@ -6,12 +6,12 @@ import (
 	"net/url"
 )
 
-type EsHttpClient struct {
+type Client struct {
 	baseUrl    url.URL
 	httpClient http.Client
 }
 
-func New(baseUrl string) *EsHttpClient {
+func NewClient(baseUrl string) *Client {
 	esUrl, err := url.Parse(baseUrl)
 	if err != nil {
 		panic(fmt.Sprint("failed to parse base url: ", baseUrl))
@@ -19,5 +19,5 @@ func New(baseUrl string) *EsHttpClient {
 
 	httpClient := http.Client{}
 
-	return &EsHttpClient{baseUrl: *esUrl, httpClient: httpClient}
+	return &Client{baseUrl: *esUrl, httpClient: httpClient}
 }

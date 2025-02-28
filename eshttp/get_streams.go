@@ -15,7 +15,7 @@ type getStreamsResponse struct {
 	StreamPage estypes.StreamPage `json:"streamPage"`
 }
 
-func (c *EsHttpClient) GetStreams(streamType string, updatedAfter time.Time) iter.Seq2[*estypes.Stream, error] {
+func (c *Client) GetStreams(streamType string, updatedAfter time.Time) iter.Seq2[*estypes.Stream, error] {
 	var nextPageKey *string
 
 	streamIter := func(yield func(*estypes.Stream, error) bool) {
@@ -43,7 +43,7 @@ func (c *EsHttpClient) GetStreams(streamType string, updatedAfter time.Time) ite
 	return streamIter
 }
 
-func (c *EsHttpClient) formatGetStreamsUrl(streamType string, updatedAfter time.Time, nextPageKey *string) string {
+func (c *Client) formatGetStreamsUrl(streamType string, updatedAfter time.Time, nextPageKey *string) string {
 	esUrl := c.baseUrl.JoinPath("streams", streamType)
 
 	updatedAfterUtc := updatedAfter.UTC()
@@ -60,7 +60,7 @@ func (c *EsHttpClient) formatGetStreamsUrl(streamType string, updatedAfter time.
 	return esUrl.String()
 }
 
-func (c *EsHttpClient) requestStreamPage(streamType string, updatedAfter time.Time, nextPageKey *string) (*estypes.StreamPage, error) {
+func (c *Client) requestStreamPage(streamType string, updatedAfter time.Time, nextPageKey *string) (*estypes.StreamPage, error) {
 	esUrl := c.formatGetStreamsUrl(streamType, updatedAfter, nextPageKey)
 	println("esUrl: %s", esUrl)
 

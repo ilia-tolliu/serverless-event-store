@@ -15,7 +15,7 @@ type appendEventResponse struct {
 	Stream estypes.Stream `json:"stream"`
 }
 
-func (c *EsHttpClient) AppendEvent(streamType string, streamId uuid.UUID, revision int, event estypes.NewEsEvent) (*estypes.Stream, error) {
+func (c *Client) AppendEvent(streamType string, streamId uuid.UUID, revision int, event estypes.NewEsEvent) (*estypes.Stream, error) {
 	url := c.formatAppendEventUrl(streamType, streamId, revision)
 
 	body, err := json.Marshal(map[string]any{
@@ -51,7 +51,7 @@ func (c *EsHttpClient) AppendEvent(streamType string, streamId uuid.UUID, revisi
 	return &respBody.Stream, nil
 }
 
-func (c *EsHttpClient) formatAppendEventUrl(streamType string, streamId uuid.UUID, revision int) string {
+func (c *Client) formatAppendEventUrl(streamType string, streamId uuid.UUID, revision int) string {
 	url := c.baseUrl.JoinPath("streams", streamType, streamId.String(), "events", strconv.Itoa(revision))
 
 	return url.String()

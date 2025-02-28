@@ -75,9 +75,9 @@ type testSqsQueue struct {
 }
 
 var (
-	esHttpClient *eshttp.EsHttpClient
+	esHttpClient *eshttp.Client
 
-	esSqsClient *essqs.EsSqsClient
+	esSqsClient *essqs.Client
 )
 
 func bootstrap(t *testing.T) {
@@ -95,8 +95,8 @@ func bootstrap(t *testing.T) {
 
 	subscribeQueueToSns(t, snsClient, testConfig, queue)
 
-	esHttpClient = eshttp.New(testConfig.EsUrl)
-	esSqsClient = essqs.New(sqsClient, *queue.url)
+	esHttpClient = eshttp.NewClient(testConfig.EsUrl)
+	esSqsClient = essqs.NewClient(sqsClient, *queue.url)
 }
 
 func loadTestConfig(t *testing.T, awsConfig aws.Config) *config.EsTestConfig {

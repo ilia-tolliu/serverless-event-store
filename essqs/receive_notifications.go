@@ -7,7 +7,7 @@ import (
 	"github.com/ilia-tolliu/serverless-event-store/estypes/esnotification"
 )
 
-func (c *EsSqsClient) ReceiveNotifications(ctx context.Context) ([]esnotification.EsNotification, error) {
+func (c *Client) ReceiveNotifications(ctx context.Context) ([]esnotification.EsNotification, error) {
 	messagesOut, err := c.sqsClient.ReceiveMessage(ctx, &sqs.ReceiveMessageInput{
 		QueueUrl:        &c.queueUrl,
 		WaitTimeSeconds: int32(c.receiveTimeoutSeconds),

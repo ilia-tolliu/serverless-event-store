@@ -13,7 +13,7 @@ type getStreamDetailsResponse struct {
 	Stream estypes.Stream `json:"stream"`
 }
 
-func (c *EsHttpClient) GetStreamDetails(streamType string, streamId uuid.UUID) (*estypes.Stream, error) {
+func (c *Client) GetStreamDetails(streamType string, streamId uuid.UUID) (*estypes.Stream, error) {
 	esUrl := c.formatGetStreamDetailsUrl(streamType, streamId)
 
 	resp, err := http.Get(esUrl)
@@ -36,6 +36,6 @@ func (c *EsHttpClient) GetStreamDetails(streamType string, streamId uuid.UUID) (
 	return &respBody.Stream, nil
 }
 
-func (c *EsHttpClient) formatGetStreamDetailsUrl(streamType string, streamId uuid.UUID) string {
+func (c *Client) formatGetStreamDetailsUrl(streamType string, streamId uuid.UUID) string {
 	return c.baseUrl.JoinPath("streams", streamType, streamId.String(), "details").String()
 }

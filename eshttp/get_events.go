@@ -16,7 +16,7 @@ type getEventsResponse struct {
 	EventPage estypes.EventPage `json:"eventPage"`
 }
 
-func (c *EsHttpClient) GetEvents(streamType string, streamId uuid.UUID, afterRevision int) iter.Seq2[*estypes.Event, error] {
+func (c *Client) GetEvents(streamType string, streamId uuid.UUID, afterRevision int) iter.Seq2[*estypes.Event, error] {
 	currentAfterRevision := afterRevision
 
 	eventIter := func(yield func(*estypes.Event, error) bool) {
@@ -44,7 +44,7 @@ func (c *EsHttpClient) GetEvents(streamType string, streamId uuid.UUID, afterRev
 	return eventIter
 }
 
-func (c *EsHttpClient) formatGetEventsUrl(streamType string, streamId uuid.UUID, afterRevision int) string {
+func (c *Client) formatGetEventsUrl(streamType string, streamId uuid.UUID, afterRevision int) string {
 	esUrl := c.baseUrl.JoinPath("streams", streamType, streamId.String(), "events")
 
 	queryValues := url.Values{
@@ -56,7 +56,7 @@ func (c *EsHttpClient) formatGetEventsUrl(streamType string, streamId uuid.UUID,
 	return esUrl.String()
 }
 
-func (c *EsHttpClient) requestEventPage(streamType string, streamId uuid.UUID, afterRevision int) (*estypes.EventPage, error) {
+func (c *Client) requestEventPage(streamType string, streamId uuid.UUID, afterRevision int) (*estypes.EventPage, error) {
 	esUrl := c.formatGetEventsUrl(streamType, streamId, afterRevision)
 
 	resp, err := http.Get(esUrl)

@@ -13,7 +13,7 @@ type createStreamResponse struct {
 	Stream estypes.Stream `json:"stream"`
 }
 
-func (c *EsHttpClient) CreateStream(streamType string, initialEvent estypes.NewEsEvent) (*estypes.Stream, error) {
+func (c *Client) CreateStream(streamType string, initialEvent estypes.NewEsEvent) (*estypes.Stream, error) {
 	esUrl := c.formatCreateStreamUrl(streamType)
 
 	body, err := json.Marshal(map[string]any{
@@ -43,6 +43,6 @@ func (c *EsHttpClient) CreateStream(streamType string, initialEvent estypes.NewE
 	return &respBody.Stream, nil
 }
 
-func (c *EsHttpClient) formatCreateStreamUrl(streamType string) string {
+func (c *Client) formatCreateStreamUrl(streamType string) string {
 	return c.baseUrl.JoinPath("streams", streamType).String()
 }

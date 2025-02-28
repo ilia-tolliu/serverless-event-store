@@ -1,5 +1,13 @@
 # go-event-store - Serverless Event Store
 
+## Feedback
+
+I am happy to help you put this Event Store to use.
+
+Please let me know for which company, product and use case it was helpful.
+
+See you at [LinkedIn](https://www.linkedin.com/in/iliatolliu/)
+
 ## Technologies
 
 * Go language

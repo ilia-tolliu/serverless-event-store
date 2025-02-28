@@ -1,4 +1,4 @@
-# go-event-store - Serverless Event Store
+# serverless-event-store - Go + AWS for Event Sourcing
 
 ## Feedback
 

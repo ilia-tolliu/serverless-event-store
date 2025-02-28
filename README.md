@@ -119,6 +119,11 @@ When creating an SQS queue, add to it a policy like this:
   }
 ```
 
+At this stage it can be helpful to use [SNS message delivery status logging](https://docs.aws.amazon.com/sns/latest/dg/sns-topic-attributes.html).
+
+For the SNS logging configuration check the [deployment code](./blob/main/_infrastructure/aws-event-store/lib/aws-event-store-stack.ts#L110).
+esTopic
+
 Once your component gets a notification, use 
 `GET /streams/{streamType}/{streamId}/event` endpoint to read the stream events.
 

@@ -17,6 +17,8 @@ See you at [LinkedIn](https://www.linkedin.com/in/iliatolliu/)
 * AWS CloudWatch to collect logs
 * AWS CDK for infrastructure-as-a-code
 
+![Serverless event store architecture diagram](./serverless-event-store.png)
+
 ## Setting up development environment
 
 ### Prerequisites

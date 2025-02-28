@@ -89,5 +89,25 @@ A notification message looks like this:
 You may subscribe to these notifications with e.g. SQS queue 
 and apply SNS subscription filtering by StreamType.
 
+**NB! make sure your SNS is allowed to send messages to SQS**
+
+When creating an SQS queue, add to it a policy like this:
+
+```json
+  {
+    "Version": "2012-10-17",
+    "Statement": [{
+      "Effect": "Allow",
+      "Action": "sqs:SendMessage",
+      "Principal": {
+        "AWS": [
+          "sns.amazonaws.com"
+        ]
+      },
+      "Resource":  "{your SQS queue ARN}"
+    }]
+  }
+```
+
 Once your component gets a notification, use 
 `GET /streams/{streamType}/{streamId}/event` endpoint to read the stream events.

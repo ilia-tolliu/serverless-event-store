@@ -52,10 +52,12 @@ func (r *EsRepo) AppendEvent(ctx context.Context, streamType string, streamId uu
 }
 
 func prepareStreamUpdate(tableName string, stream estypes.Stream) (*types.Update, error) {
+	updatedAtUtc := stream.UpdatedAt.UTC()
+
 	updateExpr, err := expression.NewBuilder().WithUpdate(
 		expression.
 			Set(expression.Name("StreamRevision"), expression.Value(stream.Revision)).
-			Set(expression.Name("UpdatedAt"), expression.Value(stream.UpdatedAt)),
+			Set(expression.Name("UpdatedAt"), expression.Value(updatedAtUtc)),
 	).
 		WithCondition(expression.Name("StreamRevision").Equal(expression.Value(stream.Revision - 1))).
 		Build()

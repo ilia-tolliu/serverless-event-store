@@ -48,7 +48,7 @@ func (c *EsHttpClient) formatGetEventsUrl(streamType string, streamId uuid.UUID,
 	esUrl := c.baseUrl.JoinPath("streams", streamType, streamId.String(), "events")
 
 	queryValues := url.Values{
-		"afterRevision": []string{strconv.Itoa(afterRevision)},
+		"after-revision": []string{strconv.Itoa(afterRevision)},
 	}
 	query := queryValues.Encode()
 	esUrl.RawQuery = query
@@ -61,7 +61,7 @@ func (c *EsHttpClient) requestEventPage(streamType string, streamId uuid.UUID, a
 
 	resp, err := http.Get(esUrl)
 	if err != nil {
-		return nil, fmt.Errorf("failed GET from Event Store: %w", err)
+		return nil, fmt.Errorf("failed GET events from Event Store: %w", err)
 	}
 
 	defer eserror.Ignore(resp.Body.Close)

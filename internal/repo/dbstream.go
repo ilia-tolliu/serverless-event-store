@@ -25,13 +25,15 @@ type dbStreamKey struct {
 }
 
 func FromStream(stream estypes.Stream) DbStream {
+	updatedAtUtc := stream.UpdatedAt.UTC()
+
 	return DbStream{
 		Pk:             stream.StreamId.String(),
 		Sk:             0,
 		RecordType:     RecordTypeStream,
 		StreamType:     stream.StreamType,
 		StreamRevision: stream.Revision,
-		UpdatedAt:      stream.UpdatedAt,
+		UpdatedAt:      updatedAtUtc,
 	}
 }
 

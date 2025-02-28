@@ -22,13 +22,15 @@ type DbEvent struct {
 }
 
 func FromEvent(event estypes.Event) DbEvent {
+	createdAtUtc := event.CreatedAt.UTC()
+
 	return DbEvent{
 		Pk:         event.StreamId.String(),
 		Sk:         event.Revision,
 		RecordType: RecordTypeEvent,
 		EventType:  event.EventType,
 		Payload:    event.Payload,
-		CreatedAt:  event.CreatedAt,
+		CreatedAt:  createdAtUtc,
 	}
 }
 

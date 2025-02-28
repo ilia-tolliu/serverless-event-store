@@ -8,24 +8,24 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/google/uuid"
-	estypes2 "github.com/ilia-tolliu-go-event-store/estypes"
+	"github.com/ilia-tolliu-go-event-store/estypes"
 	"time"
 )
 
-func (r *EsRepo) CreateStream(ctx context.Context, streamType string, initialEvent estypes2.NewEsEvent) (estypes2.Stream, error) {
+func (r *EsRepo) CreateStream(ctx context.Context, streamType string, initialEvent estypes.NewEsEvent) (estypes.Stream, error) {
 	streamId := uuid.New()
 	now := time.Now()
-	stream := estypes2.NewStream(streamId, streamType, now)
-	event := estypes2.NewEvent(streamId, 1, initialEvent, now)
+	stream := estypes.NewStream(streamId, streamType, now)
+	event := estypes.NewEvent(streamId, 1, initialEvent, now)
 
 	streamPut, err := prepareStreamPut(r.tableName, stream)
 	if err != nil {
-		return estypes2.Stream{}, err
+		return estypes.Stream{}, err
 	}
 
 	eventPut, err := PreparePutEventQuery(r.tableName, event)
 	if err != nil {
-		return estypes2.Stream{}, err
+		return estypes.Stream{}, err
 	}
 
 	_, err = r.dynamoDb.TransactWriteItems(ctx, &dynamodb.TransactWriteItemsInput{
@@ -40,13 +40,13 @@ func (r *EsRepo) CreateStream(ctx context.Context, streamType string, initialEve
 		ClientRequestToken: aws.String(streamId.String()), // todo: use better idempotency token; should come from client
 	})
 	if err != nil {
-		return estypes2.Stream{}, fmt.Errorf("failed to create stream: %w", err)
+		return estypes.Stream{}, fmt.Errorf("failed to create stream: %w", err)
 	}
 
 	return stream, nil
 }
 
-func prepareStreamPut(tableName string, stream estypes2.Stream) (*types.Put, error) {
+func prepareStreamPut(tableName string, stream estypes.Stream) (*types.Put, error) {
 	dbStream := FromStream(stream)
 
 	value, err := attributevalue.MarshalMap(dbStream)

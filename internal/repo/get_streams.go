@@ -8,28 +8,28 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	estypes2 "github.com/ilia-tolliu-go-event-store/estypes"
+	"github.com/ilia-tolliu-go-event-store/estypes"
 	"time"
 )
 
-func (r *EsRepo) GetStreams(ctx context.Context, streamType string, updatedAfter time.Time, streamNextPageKey string) (estypes2.StreamPage, error) {
+func (r *EsRepo) GetStreams(ctx context.Context, streamType string, updatedAfter time.Time, streamNextPageKey string) (estypes.StreamPage, error) {
 	streamsQuery, err := prepareStreamsQuery(r.tableName, streamType, updatedAfter, streamNextPageKey)
 	if err != nil {
-		return estypes2.StreamPage{}, fmt.Errorf("failed to prepare DbStreamsQuery: %w", err)
+		return estypes.StreamPage{}, fmt.Errorf("failed to prepare DbStreamsQuery: %w", err)
 	}
 
 	output, err := r.dynamoDb.Query(ctx, streamsQuery)
 	if err != nil {
-		return estypes2.StreamPage{}, fmt.Errorf("failed to get streams from DB: %w", err)
+		return estypes.StreamPage{}, fmt.Errorf("failed to get streams from DB: %w", err)
 	}
 
-	streams := make([]estypes2.Stream, 0, len(output.Items))
+	streams := make([]estypes.Stream, 0, len(output.Items))
 	lastEvaluatedKey := output.LastEvaluatedKey
 	var newNextPageKey string
 	if lastEvaluatedKey != nil {
 		newNextPageKey, err = FormatNextPageKey(lastEvaluatedKey)
 		if err != nil {
-			return estypes2.StreamPage{}, fmt.Errorf("failed to format next page key: %w", err)
+			return estypes.StreamPage{}, fmt.Errorf("failed to format next page key: %w", err)
 		}
 	}
 
@@ -37,18 +37,18 @@ func (r *EsRepo) GetStreams(ctx context.Context, streamType string, updatedAfter
 		var dbStream DbStream
 		err = attributevalue.UnmarshalMap(item, &dbStream)
 		if err != nil {
-			return estypes2.StreamPage{}, fmt.Errorf("failed to unmarshal stream from DB: %w", err)
+			return estypes.StreamPage{}, fmt.Errorf("failed to unmarshal stream from DB: %w", err)
 		}
 
 		stream, err := IntoStream(dbStream)
 		if err != nil {
-			return estypes2.StreamPage{}, fmt.Errorf("failed to convert DbStream into Stream [%s]: %w", dbStream.Pk, err)
+			return estypes.StreamPage{}, fmt.Errorf("failed to convert DbStream into Stream [%s]: %w", dbStream.Pk, err)
 		}
 
 		streams = append(streams, stream)
 	}
 
-	page := estypes2.StreamPage{
+	page := estypes.StreamPage{
 		Streams: streams,
 		HasMore: output.LastEvaluatedKey != nil,
 	}
@@ -60,10 +60,12 @@ func (r *EsRepo) GetStreams(ctx context.Context, streamType string, updatedAfter
 }
 
 func prepareStreamsQuery(tableName string, streamType string, updatedAfter time.Time, nextPageKey string) (*dynamodb.QueryInput, error) {
+	updatedAfterUtc := updatedAfter.UTC()
+
 	keyCond, err := expression.NewBuilder().
 		WithKeyCondition(
 			expression.Key("StreamType").Equal(expression.Value(streamType)).
-				And(expression.Key("UpdatedAt").GreaterThanEqual(expression.Value(updatedAfter))),
+				And(expression.Key("UpdatedAt").GreaterThanEqual(expression.Value(updatedAfterUtc))),
 		).
 		Build()
 	if err != nil {

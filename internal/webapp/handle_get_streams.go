@@ -49,7 +49,7 @@ func extractUpdatedAfter(r *http.Request) (time.Time, error) {
 		return zero, nil
 	}
 
-	updatedAfter, err := time.Parse(time.RFC3339, updatedAfterStr)
+	updatedAfter, err := time.Parse(time.RFC3339Nano, updatedAfterStr)
 	if err != nil {
 		return zero, fmt.Errorf("invalid updated-after value: %w", err)
 	}

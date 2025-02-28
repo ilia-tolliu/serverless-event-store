@@ -17,6 +17,7 @@ import (
 	"github.com/ilia-tolliu-go-event-store/internal/config"
 	"github.com/stretchr/testify/require"
 	"testing"
+	"time"
 )
 
 func TestEventStore(t *testing.T) {
@@ -62,6 +63,10 @@ func TestEventStore(t *testing.T) {
 		Payload:   "payload2",
 		CreatedAt: appendedStream.UpdatedAt,
 	}, secondEvent)
+
+	testStreamDetails(t, "test-stream", streamId, appendedStream)
+
+	testStreams(t, "test-stream", createdStream.UpdatedAt, appendedStream)
 }
 
 type testSqsQueue struct {
@@ -256,7 +261,29 @@ func testLoadTwoEvents(t *testing.T, streamType string, streamId uuid.UUID) (est
 		events = append(events, *event)
 	}
 
-	require.LessOrEqual(t, len(events), 2)
+	require.Equal(t, len(events), 2)
 
 	return events[0], events[1]
+}
+
+func testStreamDetails(t *testing.T, streamType string, streamId uuid.UUID, expected *estypes.Stream) {
+	stream, err := esHttpClient.GetStreamDetails(streamType, streamId)
+
+	require.NoError(t, err)
+	require.Equal(t, stream, expected)
+}
+
+func testStreams(t *testing.T, streamType string, updatedAfter time.Time, expected *estypes.Stream) {
+	streamIter := esHttpClient.GetStreams(streamType, updatedAfter)
+
+	streams := make([]estypes.Stream, 0)
+
+	for stream, err := range streamIter {
+		require.NoError(t, err)
+		streams = append(streams, *stream)
+	}
+
+	t.Logf("streams: %#v", streams)
+
+	require.Contains(t, streams, *expected)
 }

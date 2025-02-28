@@ -235,6 +235,9 @@ func testReceiveNotification(t *testing.T, expectedNotification esnotification.E
 
 	require.Len(t, notifications, 1)
 	require.EqualExportedValues(t, notifications[0], expectedNotification)
+
+	err = esSqsClient.AcknowledgeNotification(t.Context(), notifications[0])
+	require.NoError(t, err)
 }
 
 func testAppendEvent(t *testing.T, streamType string, streamId uuid.UUID, revision int, newEvent estypes.NewEsEvent) *estypes.Stream {

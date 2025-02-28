@@ -234,7 +234,7 @@ func testReceiveNotification(t *testing.T, expectedNotification esnotification.E
 	}
 
 	require.Len(t, notifications, 1)
-	require.Equal(t, notifications[0], expectedNotification)
+	require.EqualExportedValues(t, notifications[0], expectedNotification)
 }
 
 func testAppendEvent(t *testing.T, streamType string, streamId uuid.UUID, revision int, newEvent estypes.NewEsEvent) *estypes.Stream {

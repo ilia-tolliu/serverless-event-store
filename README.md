@@ -111,3 +111,19 @@ When creating an SQS queue, add to it a policy like this:
 
 Once your component gets a notification, use 
 `GET /streams/{streamType}/{streamId}/event` endpoint to read the stream events.
+
+### Go client library
+
+In Go code you are welcome to use client libraries, packages `eshttp` and `essqs`.
+
+The HTTP client is a convenient wrapper for the Event Store HTTP API. 
+It handles streams and events pagination internally and returns iterators for these two endpoints.
+
+If you use AWS Lambda to react to Event Store notifications, then you don't need `essqs` client,
+since you get SQS message as Lambda input. In this case you only need a notification converter
+in package `estypes/esnotification`.
+
+If, though, you process Event Store updates in a standalone service, then `essqs` has
+methods to receive pending notifications and acknowledge the processed ones.
+
+**Examples** of using the client libraries can be found in the end-to-end test `test/e2e_test`.

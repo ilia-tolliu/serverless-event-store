@@ -7,6 +7,10 @@ import (
 	"github.com/ilia-tolliu/serverless-event-store/estypes/esnotification"
 )
 
+// ReceiveNotifications retrieves pending Event Store notifications from SQS queue
+//
+// The Event Store payload is extracted from SQS message and SNS message.
+// Once received notification is processed, you should acknowledge it to delete from SQS.
 func (c *Client) ReceiveNotifications(ctx context.Context) ([]esnotification.EsNotification, error) {
 	messagesOut, err := c.sqsClient.ReceiveMessage(ctx, &sqs.ReceiveMessageInput{
 		QueueUrl:        &c.queueUrl,

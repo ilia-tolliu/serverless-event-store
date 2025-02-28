@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "Go Event Store - OpenAPI 3.0",
-    "description": "This is a serverless Event Store implementation written in Go and running on AWS infrastructure.\n\nSome useful links:\n- [Go Event Store repository](https://github.com/ilia-tolliu-go-event-store)",
+    "description": "This is a serverless Event Store implementation written in Go and running on AWS infrastructure.\n\nSome useful links:\n- [Go Event Store repository](https://github.com/ilia-tolliu/serverless-event-store)",
     "contact": {
       "email": "im.tollu@gmail.com"
     },
@@ -14,7 +14,7 @@
   },
   "externalDocs": {
     "description": "Find out more",
-    "url": "https://github.com/ilia-tolliu-go-event-store"
+    "url": "https://github.com/ilia-tolliu/serverless-event-store"
   },
   "servers": [
     {

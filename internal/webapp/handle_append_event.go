@@ -3,9 +3,9 @@ package webapp
 import (
 	"context"
 	"fmt"
-	estypes2 "github.com/ilia-tolliu-go-event-store/estypes"
-	"github.com/ilia-tolliu-go-event-store/internal/eserror"
-	"github.com/ilia-tolliu-go-event-store/internal/esvalidate"
+	estypes2 "github.com/ilia-tolliu/serverless-event-store/estypes"
+	"github.com/ilia-tolliu/serverless-event-store/internal/eserror"
+	"github.com/ilia-tolliu/serverless-event-store/internal/esvalidate"
 	"net/http"
 )
 

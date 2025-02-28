@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/google/uuid"
-	"github.com/ilia-tolliu-go-event-store/estypes"
+	"github.com/ilia-tolliu/serverless-event-store/estypes"
 	"time"
 )
 

@@ -1,10 +1,10 @@
-package sqsclient
+package essqs
 
 import (
 	"context"
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
-	"github.com/ilia-tolliu-go-event-store/estypes/esnotification"
+	"github.com/ilia-tolliu/serverless-event-store/estypes/esnotification"
 )
 
 func (c *EsSqsClient) ReceiveNotifications(ctx context.Context) ([]esnotification.EsNotification, error) {

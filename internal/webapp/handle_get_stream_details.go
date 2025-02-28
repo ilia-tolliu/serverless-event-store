@@ -3,8 +3,8 @@ package webapp
 import (
 	"context"
 	"fmt"
-	"github.com/ilia-tolliu-go-event-store/estypes"
-	"github.com/ilia-tolliu-go-event-store/internal/eserror"
+	"github.com/ilia-tolliu/serverless-event-store/estypes"
+	"github.com/ilia-tolliu/serverless-event-store/internal/eserror"
 	"net/http"
 )
 

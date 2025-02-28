@@ -2,10 +2,10 @@ package main
 
 import (
 	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/ilia-tolliu-go-event-store/internal"
-	"github.com/ilia-tolliu-go-event-store/internal/config"
-	"github.com/ilia-tolliu-go-event-store/internal/eserror"
-	"github.com/ilia-tolliu-go-event-store/internal/logger"
+	"github.com/ilia-tolliu/serverless-event-store/internal"
+	"github.com/ilia-tolliu/serverless-event-store/internal/config"
+	"github.com/ilia-tolliu/serverless-event-store/internal/eserror"
+	"github.com/ilia-tolliu/serverless-event-store/internal/logger"
 	"github.com/its-felix/aws-lambda-go-http-adapter/adapter"
 	"github.com/its-felix/aws-lambda-go-http-adapter/handler"
 	"go.uber.org/zap"

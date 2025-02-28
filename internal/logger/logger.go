@@ -3,7 +3,7 @@ package logger
 import (
 	"context"
 	"fmt"
-	"github.com/ilia-tolliu-go-event-store/internal/config"
+	"github.com/ilia-tolliu/serverless-event-store/internal/config"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"os"

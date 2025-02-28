@@ -10,11 +10,11 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	sqstypes "github.com/aws/aws-sdk-go-v2/service/sqs/types"
 	"github.com/google/uuid"
-	"github.com/ilia-tolliu-go-event-store/esclient/httpclient"
-	"github.com/ilia-tolliu-go-event-store/esclient/sqsclient"
-	"github.com/ilia-tolliu-go-event-store/estypes"
-	"github.com/ilia-tolliu-go-event-store/estypes/esnotification"
-	"github.com/ilia-tolliu-go-event-store/internal/config"
+	"github.com/ilia-tolliu/serverless-event-store/eshttp"
+	"github.com/ilia-tolliu/serverless-event-store/essqs"
+	"github.com/ilia-tolliu/serverless-event-store/estypes"
+	"github.com/ilia-tolliu/serverless-event-store/estypes/esnotification"
+	"github.com/ilia-tolliu/serverless-event-store/internal/config"
 	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
@@ -75,9 +75,9 @@ type testSqsQueue struct {
 }
 
 var (
-	esHttpClient *httpclient.EsHttpClient
+	esHttpClient *eshttp.EsHttpClient
 
-	esSqsClient *sqsclient.EsSqsClient
+	esSqsClient *essqs.EsSqsClient
 )
 
 func bootstrap(t *testing.T) {
@@ -95,8 +95,8 @@ func bootstrap(t *testing.T) {
 
 	subscribeQueueToSns(t, snsClient, testConfig, queue)
 
-	esHttpClient = httpclient.New(testConfig.EsUrl)
-	esSqsClient = sqsclient.New(sqsClient, *queue.url)
+	esHttpClient = eshttp.New(testConfig.EsUrl)
+	esSqsClient = essqs.New(sqsClient, *queue.url)
 }
 
 func loadTestConfig(t *testing.T, awsConfig aws.Config) *config.EsTestConfig {

@@ -3,7 +3,7 @@ package webapp
 import (
 	"context"
 	"errors"
-	"github.com/ilia-tolliu-go-event-store/internal/logger"
+	"github.com/ilia-tolliu/serverless-event-store/internal/logger"
 	"net/http"
 	"time"
 )

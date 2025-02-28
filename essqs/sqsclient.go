@@ -1,4 +1,4 @@
-package sqsclient
+package essqs
 
 import (
 	"github.com/aws/aws-sdk-go-v2/service/sqs"

@@ -3,7 +3,7 @@ package esvalidate
 import (
 	"errors"
 	"github.com/go-playground/validator/v10"
-	"github.com/ilia-tolliu-go-event-store/internal/eserror"
+	"github.com/ilia-tolliu/serverless-event-store/internal/eserror"
 	"reflect"
 	"strings"
 )

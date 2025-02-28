@@ -3,7 +3,7 @@ package repo
 import (
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/ilia-tolliu-go-event-store/estypes"
+	"github.com/ilia-tolliu/serverless-event-store/estypes"
 	"time"
 )
 

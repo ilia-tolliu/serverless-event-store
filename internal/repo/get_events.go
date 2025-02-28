@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/google/uuid"
-	estypes2 "github.com/ilia-tolliu-go-event-store/estypes"
+	estypes2 "github.com/ilia-tolliu/serverless-event-store/estypes"
 )
 
 func (r *EsRepo) GetEvents(ctx context.Context, streamId uuid.UUID, afterRevision int) (estypes2.EventPage, error) {

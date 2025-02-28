@@ -1,12 +1,12 @@
-package httpclient
+package eshttp
 
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
-	"github.com/ilia-tolliu-go-event-store/estypes"
-	"github.com/ilia-tolliu-go-event-store/internal/eserror"
+	"github.com/ilia-tolliu/serverless-event-store/estypes"
+	"github.com/ilia-tolliu/serverless-event-store/internal/eserror"
 	"net/http"
 	"strconv"
 )

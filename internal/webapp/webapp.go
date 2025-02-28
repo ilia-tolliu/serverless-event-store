@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/go-chi/chi/v5"
-	"github.com/ilia-tolliu-go-event-store/internal/logger"
-	"github.com/ilia-tolliu-go-event-store/internal/repo"
+	"github.com/ilia-tolliu/serverless-event-store/internal/logger"
+	"github.com/ilia-tolliu/serverless-event-store/internal/repo"
 	"go.uber.org/zap"
 	"net/http"
 )

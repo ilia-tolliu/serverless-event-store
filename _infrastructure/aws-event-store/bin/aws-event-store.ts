@@ -4,7 +4,7 @@ import {AwsEventStoreStack} from '../lib/aws-event-store-stack';
 import {esConfig} from "../lib/esConfig";
 
 const app = new cdk.App();
-new AwsEventStoreStack(app, 'AwsEventStoreStack', {
+new AwsEventStoreStack(app, `AwsEventStoreStack-${esConfig.appMode}`, {
     /* If you don't specify 'env', this stack will be environment-agnostic.
      * Account/Region-dependent features and context lookups will not work,
      * but a single synthesized template can be deployed anywhere. */

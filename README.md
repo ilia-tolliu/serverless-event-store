@@ -48,6 +48,11 @@ AwsEventStoreStack.EsUrl = https://********.lambda-url.********.on.aws/
 
 You can also check this references later: `$ just describe`
 
+Run end-to-end test on the same environment you've deployed it: `$ just test`
+
+`justfile` scripts `deploy`, `describe`, `diff` and `test` by default use staging environment.
+Check `app_mode` assignment in the `justfile`.
+
 * Done! Event store is deployed and available for use in development.
 * Navigate to the Event Store url for interactive API specification.
 

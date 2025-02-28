@@ -200,6 +200,16 @@ func subscribeQueueToSns(t *testing.T, snsClient *sns.Client, testConfig *config
 	if err != nil {
 		t.Fatalf("failed to subscribe to stream notifications, %v", err)
 	}
+
+	t.Cleanup(func() {
+		_, err := snsClient.Unsubscribe(context.Background(), &sns.UnsubscribeInput{
+			SubscriptionArn: subOutput.SubscriptionArn,
+		})
+		if err != nil {
+			t.Fatalf("failed to unsubscribe, %s %v", *subOutput.SubscriptionArn, err)
+		}
+	})
+
 	t.Logf("subscribed to stream notifications: %s", *subOutput.SubscriptionArn)
 }
 

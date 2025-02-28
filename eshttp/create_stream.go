@@ -13,6 +13,12 @@ type createStreamResponse struct {
 	Stream estypes.Stream `json:"stream"`
 }
 
+// CreateStream persists new event-sourced stream together with initial event.
+//
+// Stream type means a kind of workflow that the stream will follow.
+// Streams of the same type support the same types of events and are subject to the same processing.
+//
+// When subscribing to an Event Store updates, stream type can be used as a criteria in SNS subscription filter.
 func (c *Client) CreateStream(streamType string, initialEvent estypes.NewEsEvent) (*estypes.Stream, error) {
 	esUrl := c.formatCreateStreamUrl(streamType)
 

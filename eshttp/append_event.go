@@ -15,6 +15,13 @@ type appendEventResponse struct {
 	Stream estypes.Stream `json:"stream"`
 }
 
+// AppendEvent persists another event at the tail of the stream.
+//
+// To successfully append an event to a stream, you should not at which revision N the stream currently is.
+// Then you can append an event exactly with revision N + 1.
+// Attempt to append an event with inconsistent revision will cause an error.
+//
+// This is one of the guarantees of an Event Store.
 func (c *Client) AppendEvent(streamType string, streamId uuid.UUID, revision int, event estypes.NewEsEvent) (*estypes.Stream, error) {
 	url := c.formatAppendEventUrl(streamType, streamId, revision)
 

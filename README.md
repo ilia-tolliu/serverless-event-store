@@ -39,16 +39,14 @@ See you at [LinkedIn](https://www.linkedin.com/in/iliatolliu/)
 The output of deploy step will contain resource references:
 
 ```
-Outputs:
-AwsEventStoreStack.EsDynamoDbTable = AwsEventStoreStack-EsTable********
-AwsEventStoreStack.EsLogGroup = AwsEventStoreStack-EsLogs********
-AwsEventStoreStack.EsSnsTopic = arn:aws:sns:eu-central-1:********:AwsEventStoreStack-EsTopic********
-AwsEventStoreStack.EsUrl = https://********.lambda-url.********.on.aws/
+AwsEventStoreStack-staging.EsDynamoDbTable = AwsEventStoreStack-staging-EsTable****
+AwsEventStoreStack-staging.EsLogGroup = AwsEventStoreStack-staging-EsLogs****
+AwsEventStoreStack-staging.EsSnsTopic = arn:aws:sns:eu-central-1:****:AwsEventStoreStack-staging-EsTopic****
+AwsEventStoreStack-staging.EsUrl = https://****.lambda-url.eu-central-1.on.aws/
 ```
 
-You can also check this references later: `$ just describe`
-
-Run end-to-end test on the same environment you've deployed it: `$ just test`
+* Check this references later: `$ just describe`
+* Run end-to-end test on the same environment you've deployed it: `$ just test`
 
 `justfile` scripts `deploy`, `describe`, `diff` and `test` by default use staging environment.
 Check `app_mode` assignment in the `justfile`.
@@ -57,6 +55,10 @@ Check `app_mode` assignment in the `justfile`.
 * Navigate to the Event Store url for interactive API specification.
 
 **NB! For production use Lambda Function URL should be updated to use AWS IAM authentication**
+
+### Tweaking infrastructure
+
+The AWS Cloudformation stack used for the Event Store is described in CDK. You can find it in [_infrastructure/aws-event-store/lib/aws-event-store-stack.ts](./blob/main/_infrastructure/aws-event-store/lib/aws-event-store-stack.ts)
 
 ## What is an Event Store
 

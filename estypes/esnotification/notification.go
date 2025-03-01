@@ -11,10 +11,6 @@ type EsNotification struct {
 	sqsReceiptHandle string
 }
 
-func (n *EsNotification) SetSqsReceiptHandle(receiptHandle string) {
-	n.sqsReceiptHandle = receiptHandle
-}
-
 func (n *EsNotification) GetSqsReceiptHandle() string {
 	return n.sqsReceiptHandle
 }

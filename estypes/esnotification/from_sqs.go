@@ -19,7 +19,7 @@ func NewFromSqsMessage(sqsMessage sqstypes.Message) (EsNotification, error) {
 		return EsNotification{}, fmt.Errorf("failed to unmarshal EsNotification: %v", err)
 	}
 
-	esNotification.SetSqsReceiptHandle(*sqsMessage.ReceiptHandle)
+	esNotification.sqsReceiptHandle = *sqsMessage.ReceiptHandle
 
 	return esNotification, nil
 }

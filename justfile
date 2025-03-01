@@ -24,3 +24,10 @@ diff:
 
 test:
     EVENT_STORE_MODE={{app_mode}} go test ./test -count=1
+
+# Requires godoc tool to be installed:
+# $ go install golang.org/x/tools/cmd/godoc@latest
+#
+# Build godoc documentation and make it awailable at http://localhost:8000
+doc:
+    godoc -http=:8000

@@ -3,17 +3,17 @@ package webapp
 import (
 	"context"
 	"fmt"
-	estypes2 "github.com/ilia-tolliu/serverless-event-store/estypes"
+	"github.com/ilia-tolliu/serverless-event-store/estypes"
 	"github.com/ilia-tolliu/serverless-event-store/internal/esvalidate"
 	"net/http"
 )
 
 type createStreamRequest struct {
-	InitialEvent *estypes2.NewEsEvent `json:"initialEvent,omitempty" validate:"required"`
+	InitialEvent *estypes.NewEsEvent `json:"initialEvent,omitempty" validate:"required"`
 }
 
 type createStreamResponse struct {
-	Stream estypes2.Stream `json:"stream"`
+	Stream estypes.Stream `json:"stream"`
 }
 
 func (a *WebApp) HandleCreateStream(ctx context.Context, r *http.Request) (Response, error) {

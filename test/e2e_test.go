@@ -20,6 +20,14 @@ import (
 	"time"
 )
 
+// TestEventStore is an end-to-end test for a deployed Event Store
+// It can be used in any environment. Including production by using a synthetic stream type.
+//
+// This is also an example of how Event Store can be used in a project.
+//
+// Although SNS supports various notification channels, I anticipate SQS to be the most common.
+//
+// For the sake of test, bootstrap step creates an SQS queue and subscribes it to the Event Store SNS.
 func TestEventStore(t *testing.T) {
 	bootstrap(t)
 

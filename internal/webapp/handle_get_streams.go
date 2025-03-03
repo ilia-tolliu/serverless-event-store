@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/ilia-tolliu/serverless-event-store/estypes"
+	"github.com/ilia-tolliu/serverless-event-store/internal/webapp/types/resp"
 	"net/http"
 	"time"
 )
@@ -12,31 +13,31 @@ type getStreamsResponse struct {
 	StreamPage estypes.StreamPage `json:"streamPage"`
 }
 
-func (a *WebApp) HandleGetStreams(ctx context.Context, r *http.Request) (Response, error) {
+func (a *WebApp) HandleGetStreams(ctx context.Context, r *http.Request) (resp.EsResponse, error) {
 	streamType, err := ExtractStreamType(r)
 	if err != nil {
-		return Response{}, err
+		return resp.EsResponse{}, err
 	}
 
 	updatedAfter, err := extractUpdatedAfter(r)
 	if err != nil {
-		return Response{}, err
+		return resp.EsResponse{}, err
 	}
 
 	nextPageKey, err := extractStreamNextPageKey(r)
 	if err != nil {
-		return Response{}, err
+		return resp.EsResponse{}, err
 	}
 
 	streamPage, err := a.esRepo.GetStreams(ctx, streamType, updatedAfter, nextPageKey)
 	if err != nil {
-		return Response{}, fmt.Errorf("failed to get streams: %w", err)
+		return resp.EsResponse{}, fmt.Errorf("failed to get streams: %w", err)
 	}
 
 	responseBody := getStreamsResponse{
 		StreamPage: streamPage,
 	}
-	response := NewResponse(Status(http.StatusOK), Json(responseBody))
+	response := resp.New(resp.WithStatus(http.StatusOK), resp.WithJson(responseBody))
 
 	return response, nil
 }

@@ -12,7 +12,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sns v1.34.0
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.38.0
 	github.com/aws/aws-sdk-go-v2/service/ssm v1.57.0
-	github.com/go-chi/chi/v5 v5.2.1
 	github.com/go-playground/validator/v10 v10.25.0
 	github.com/google/uuid v1.6.0
 	github.com/its-felix/aws-lambda-go-http-adapter v0.8.0

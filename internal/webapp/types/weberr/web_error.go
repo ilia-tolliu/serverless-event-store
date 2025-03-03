@@ -1,10 +1,11 @@
-package webapp
+package weberr
 
 import (
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/ilia-tolliu/serverless-event-store/internal/eserror"
+	"github.com/ilia-tolliu/serverless-event-store/internal/webapp/types/resp"
 	"net/http"
 )
 
@@ -17,7 +18,7 @@ type WebError struct {
 	Details          any       `json:"details"`
 }
 
-func NewWebError(requestId uuid.UUID, err error) *WebError {
+func New(requestId uuid.UUID, err error) *WebError {
 	webErr := &WebError{
 		Status:           http.StatusInternalServerError,
 		MessageForClient: "Something went wrong",
@@ -53,6 +54,6 @@ func (e *WebError) Unwrap() error {
 	return e.Err
 }
 
-func IntoResponse(err WebError) Response {
-	return NewResponse(Status(err.Status), Json(err))
+func IntoResponse(err WebError) resp.EsResponse {
+	return resp.New(resp.WithStatus(err.Status), resp.WithJson(err))
 }

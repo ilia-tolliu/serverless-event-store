@@ -4,12 +4,15 @@ import (
 	"context"
 	"errors"
 	"github.com/ilia-tolliu/serverless-event-store/internal/logger"
+	"github.com/ilia-tolliu/serverless-event-store/internal/webapp/types"
+	"github.com/ilia-tolliu/serverless-event-store/internal/webapp/types/resp"
+	"github.com/ilia-tolliu/serverless-event-store/internal/webapp/types/weberr"
 	"net/http"
 	"time"
 )
 
-func MwLogRequest(handler Handler) Handler {
-	h := func(ctx context.Context, r *http.Request) (Response, error) {
+func MwLogRequest(handler types.EsHandler) types.EsHandler {
+	h := func(ctx context.Context, r *http.Request) (resp.EsResponse, error) {
 		log := logger.FromContext(ctx)
 		start := time.Now()
 
@@ -26,7 +29,7 @@ func MwLogRequest(handler Handler) Handler {
 		if err != nil {
 			status := http.StatusInternalServerError
 
-			webErr := &WebError{}
+			webErr := &weberr.WebError{}
 			if errors.As(err, &webErr) {
 				status = webErr.Status
 			}
@@ -36,12 +39,12 @@ func MwLogRequest(handler Handler) Handler {
 				"status", status,
 			)
 
-			return NewResponse(), err
+			return resp.New(), err
 		}
 
 		log.Infow("response completed",
 			"latency", latency,
-			"status", response.status,
+			"status", response.Status(),
 		)
 
 		return response, nil

@@ -35,7 +35,7 @@ func BootstrapWebApp(mode config.AppMode, log *zap.SugaredLogger) (*webapp.WebAp
 	dynamoDb := dynamodb.NewFromConfig(awsConfig)
 	esRepo := repo.NewEsRepo(dynamoDb, esConfig.TableName)
 
-	webApp := webapp.NewEsWebApp(esRepo, log)
+	webApp := webapp.New(esRepo, log)
 
 	return webApp, esConfig, nil
 }

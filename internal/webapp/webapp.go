@@ -34,9 +34,9 @@ func NewEsWebApp(esRepo *repo.EsRepo, log *zap.SugaredLogger) *WebApp {
 	webApp.EsRoute(http.MethodPut, "/streams/{streamType}/{streamId}/events/{streamRevision}", webApp.HandleAppendEvent)
 	webApp.EsRoute(http.MethodGet, "/streams/{streamType}/{streamId}/events", webApp.HandleGetStreamEvents)
 
-	webApp.Get("/openapi/openapi-spec.json", HandleOpenapiSpec)
-	SwaggerUiServer(webApp, "/openapi")
-	webApp.EsRoute(http.MethodGet, "/", webApp.HandleGetHome)
+	webApp.HandleFunc("/openapi/openapi-spec.json", HandleOpenapiSpec)
+	webApp.HandleFunc("/openapi/", HandleSwaggerUi)
+	webApp.Handle("/", http.RedirectHandler("/openapi/", http.StatusMovedPermanently))
 
 	return webApp
 }

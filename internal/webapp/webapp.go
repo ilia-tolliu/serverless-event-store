@@ -6,6 +6,7 @@ import (
 	"github.com/ilia-tolliu/serverless-event-store/internal/logger"
 	"github.com/ilia-tolliu/serverless-event-store/internal/repo"
 	"github.com/ilia-tolliu/serverless-event-store/internal/webapp/types"
+	"github.com/ilia-tolliu/serverless-event-store/internal/webapp/types/middleware"
 	"github.com/ilia-tolliu/serverless-event-store/internal/webapp/types/weberr"
 	"go.uber.org/zap"
 	"net/http"
@@ -13,7 +14,7 @@ import (
 
 type WebApp struct {
 	*http.ServeMux
-	mw     []types.EsMiddleware
+	mw     []middleware.EsMiddleware
 	log    *zap.SugaredLogger
 	esRepo *repo.EsRepo
 }
@@ -21,19 +22,19 @@ type WebApp struct {
 func New(esRepo *repo.EsRepo, log *zap.SugaredLogger) *WebApp {
 	webApp := &WebApp{
 		ServeMux: http.NewServeMux(),
-		mw:       []types.EsMiddleware{},
+		mw:       []middleware.EsMiddleware{},
 		log:      log,
 		esRepo:   esRepo,
 	}
 
 	webApp.mw = append(webApp.mw, MwLogRequest)
 	webApp.mw = append(webApp.mw, MwConvertError)
-	webApp.EsHandle("GET /liveness-check", webApp.HandleLivenessCheck)
-	webApp.EsHandle("POST /streams/{streamType}", webApp.HandleCreateStream)
-	webApp.EsHandle("GET /streams/{streamType}", webApp.HandleGetStreams)
-	webApp.EsHandle("GET /streams/{streamType}/{streamId}/details", webApp.HandleGetStreamDetails)
-	webApp.EsHandle("PUT /streams/{streamType}/{streamId}/events/{streamRevision}", webApp.HandleAppendEvent)
-	webApp.EsHandle("GET /streams/{streamType}/{streamId}/events", webApp.HandleGetStreamEvents)
+	webApp.esHandle("GET /liveness-check", webApp.HandleLivenessCheck)
+	webApp.esHandle("POST /streams/{streamType}", webApp.HandleCreateStream)
+	webApp.esHandle("GET /streams/{streamType}", webApp.HandleGetStreams)
+	webApp.esHandle("GET /streams/{streamType}/{streamId}/details", webApp.HandleGetStreamDetails)
+	webApp.esHandle("PUT /streams/{streamType}/{streamId}/events/{streamRevision}", webApp.HandleAppendEvent)
+	webApp.esHandle("GET /streams/{streamType}/{streamId}/events", webApp.HandleGetStreamEvents)
 
 	webApp.HandleFunc("/openapi/openapi-spec.json", HandleOpenapiSpec)
 	webApp.HandleFunc("/openapi/", HandleSwaggerUi)
@@ -42,9 +43,9 @@ func New(esRepo *repo.EsRepo, log *zap.SugaredLogger) *WebApp {
 	return webApp
 }
 
-func (a *WebApp) EsHandle(pattern string, handler types.EsHandler, mw ...types.EsMiddleware) {
-	handler = types.WrapMiddleware(mw, handler)
-	handler = types.WrapMiddleware(a.mw, handler)
+func (a *WebApp) esHandle(pattern string, handler types.EsHandler, mw ...middleware.EsMiddleware) {
+	handler = middleware.Wrap(mw, handler)
+	handler = middleware.Wrap(a.mw, handler)
 
 	h := func(w http.ResponseWriter, r *http.Request) {
 		requestId := NewRequestId()

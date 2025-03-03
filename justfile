@@ -2,7 +2,13 @@
 default:
     @just --list
 
-#Remove Go build artifacts
+app_mode := "staging"
+
+# Run the Event Store locally
+run:
+    EVENT_STORE_MODE={{app_mode}} go run ./cmd/event_store_local
+
+# Remove Go build artifacts
 clean:
     rm -rf ./build && rm -f function.zip
 
@@ -13,8 +19,6 @@ build: clean
     cp -r swagger_ui ./build
     cp openapi_spec.json ./build
     (cd ./build && zip -r ../function.zip .)
-
-app_mode := "staging"
 
 # Build and deploy the Event Store to AWS
 deploy: build

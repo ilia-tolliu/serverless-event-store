@@ -32,6 +32,7 @@ See you at [LinkedIn](https://www.linkedin.com/in/iliatolliu/)
 
 ### Getting started
 
+* Clone this repository.
 * Go to `./_infrastructure/aws-event-store` and create `.env` file based on `.env.example`.
 * Bootstrap your AWS environment: `$ cdk bootstrap`
 * Build & deploy: `$ just deploy`
